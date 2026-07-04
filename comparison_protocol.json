@@ -1,0 +1,236 @@
+{
+  "protocol_name": "fair_patient_level_24h_comparison_v1",
+  "patient_split": "patient_split.csv",
+  "patient_id_column": "subject_id",
+  "window_key": [
+    "stay_id",
+    "sofa_hour"
+  ],
+  "sequence_length_hours": 24,
+  "predictors": [
+    "heart_rate",
+    "respiratory_rate",
+    "spo2",
+    "fio2",
+    "temperature_c",
+    "sbp",
+    "gcs_total",
+    "map",
+    "pao2_fio2",
+    "platelets",
+    "bilirubin",
+    "creatinine",
+    "lactate"
+  ],
+  "outcomes": [
+    "label_sofa_increase_ge2_6h",
+    "label_sofa_increase_ge2_12h",
+    "label_sofa_increase_ge2_24h"
+  ],
+  "modes": {
+    "full": "all eligible train/validation/test windows",
+    "equal_sample": {
+      "train_windows_per_horizon": 200000,
+      "validation_windows_per_horizon": 50000,
+      "test": "all eligible test windows",
+      "manifest": "equal_sample_windows.csv.gz"
+    }
+  },
+  "imputation": "within-stay forward fill, then fixed clinical defaults; no backward fill",
+  "seed": 42,
+  "full_cohort": [
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 3843400,
+      "positive": 217650,
+      "negative": 3625750,
+      "prevalence": 0.05662954675547692,
+      "cohort_sha256": "01c84dbfa19a680e2645006e5cc5e56a6f747636b3e5ad2e9bf93968beb85062"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 819573,
+      "positive": 47638,
+      "negative": 771935,
+      "prevalence": 0.05812538968462846,
+      "cohort_sha256": "87ba42c5c12be7b6b1113d8b347fb31711f1b2ad2100d03564e35f287ec1cd9a"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 830839,
+      "positive": 47292,
+      "negative": 783547,
+      "prevalence": 0.056920775264521765,
+      "cohort_sha256": "5a3afc9059e6a5dbf7f7e3da3f0297c07889e7dec19a65fe77122c2e157168db"
+    },
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 3602603,
+      "positive": 378240,
+      "negative": 3224363,
+      "prevalence": 0.10499075251977529,
+      "cohort_sha256": "b6581d26782c1d931e95d682b82bd646b4e5db8943edf58dab3fa5a356716ab1"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 768058,
+      "positive": 83099,
+      "negative": 684959,
+      "prevalence": 0.10819365204190308,
+      "cohort_sha256": "6ff51552fbd16dd2f87b5e3dac1e9d3df37ec2d0f8c52ee962faf2fd58517613"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 779240,
+      "positive": 82353,
+      "negative": 696887,
+      "prevalence": 0.10568374313433603,
+      "cohort_sha256": "5aee8c2ae60c3a49b9ca2177a4af3f2d984e060f35dd8d940d21272e42733c48"
+    },
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 3184689,
+      "positive": 588916,
+      "negative": 2595773,
+      "prevalence": 0.18492103938563545,
+      "cohort_sha256": "8d7c92b2cce5854b7356b34804835753c25a7844a8c917f3d0ce4b15e6a2a5c1"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 678998,
+      "positive": 127705,
+      "negative": 551293,
+      "prevalence": 0.18807860995172299,
+      "cohort_sha256": "c8b51d5de7a682c00ddb43e2609a6c493ab5db76f70201f17e8cc0ee07047a74"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 689904,
+      "positive": 127837,
+      "negative": 562067,
+      "prevalence": 0.18529679491639417,
+      "cohort_sha256": "17a4895c0ac14d666832d4679fff2dfe7ca8742d5b9bba4a27ae2a8ad4fc94fb"
+    }
+  ],
+  "equal_sample_cohort": [
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 200000,
+      "positive": 11326,
+      "negative": 188674,
+      "prevalence": 0.05663,
+      "cohort_sha256": "322baea356ba6995a4a5146cc8a1916397e441dbdea5e2934e3512f8b99f173a",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 50000,
+      "positive": 2906,
+      "negative": 47094,
+      "prevalence": 0.05812,
+      "cohort_sha256": "efd4a21c2cd57ac6fc6f620bdc02a3ae1b8193d22ea2a7703986a8f6f62ede0d",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 830839,
+      "positive": 47292,
+      "negative": 783547,
+      "prevalence": 0.056920775264521765,
+      "cohort_sha256": "5a3afc9059e6a5dbf7f7e3da3f0297c07889e7dec19a65fe77122c2e157168db",
+      "selection": "full_test"
+    },
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 200000,
+      "positive": 20998,
+      "negative": 179002,
+      "prevalence": 0.10499,
+      "cohort_sha256": "5dfc2ce44edd4bb068b3bdf71756e8e6642eaab6703c14eefe6d34b21ca56b6a",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 50000,
+      "positive": 5410,
+      "negative": 44590,
+      "prevalence": 0.1082,
+      "cohort_sha256": "2c0650a005aae503154b8de66f950739f5b7a03a46389007886d54143649b34a",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_12h",
+      "horizon_hours": 12,
+      "windows": 779240,
+      "positive": 82353,
+      "negative": 696887,
+      "prevalence": 0.10568374313433603,
+      "cohort_sha256": "5aee8c2ae60c3a49b9ca2177a4af3f2d984e060f35dd8d940d21272e42733c48",
+      "selection": "full_test"
+    },
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 200000,
+      "positive": 36984,
+      "negative": 163016,
+      "prevalence": 0.18492,
+      "cohort_sha256": "036a1614ecbe005f358c15d6e04a9a61a1f195893ad5ec427544860bcdb20ea2",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 50000,
+      "positive": 9404,
+      "negative": 40596,
+      "prevalence": 0.18808,
+      "cohort_sha256": "fec5b5ac85993eb5e1a0cc2b365d883f0ab548d2370d5fd123b1d8029ca76693",
+      "selection": "equal_sample"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_24h",
+      "horizon_hours": 24,
+      "windows": 689904,
+      "positive": 127837,
+      "negative": 562067,
+      "prevalence": 0.18529679491639417,
+      "cohort_sha256": "17a4895c0ac14d666832d4679fff2dfe7ca8742d5b9bba4a27ae2a8ad4fc94fb",
+      "selection": "full_test"
+    }
+  ],
+  "equal_sample_manifest_sha256": "0ace280895a83c86ac375ab9a6f14d15db7f57b78c66baf1f06cf5d1b59883bb",
+  "protocol_sha256": "47629531beb32b3d2022e37471835ca592d7779197b7fe3696ee1cc8fc3ad184"
+}

@@ -1,0 +1,95 @@
+{
+  "observation_windows_hours": [
+    4,
+    6,
+    12
+  ],
+  "base_features": [
+    "heart_rate",
+    "respiratory_rate",
+    "spo2",
+    "sbp",
+    "dbp",
+    "map",
+    "temperature_c",
+    "fio2",
+    "gcs_total",
+    "mechanical_vent",
+    "lactate",
+    "pao2",
+    "pao2_fio2",
+    "bilirubin",
+    "creatinine",
+    "platelets"
+  ],
+  "measurement_process_features": {
+    "is_missing": "1 when no raw measurement exists at the current ICU hour; computed before LOCF",
+    "time_since_last_measurement_h": "hours since the most recent raw measurement; no future backfill"
+  },
+  "rolling_features": {
+    "mean": "rolling mean including current hour",
+    "min": "rolling minimum including current hour",
+    "max": "rolling maximum including current hour",
+    "std": "rolling sample standard deviation; one observation is set to zero",
+    "change": "current LOCF value minus the value at the beginning of the window",
+    "slope": "change divided by window_hours - 1",
+    "abnormal_duration": "number of hourly LOCF states outside the predefined clinical range",
+    "abnormal_frequency": "fraction of actual measurements outside the predefined clinical range"
+  },
+  "abnormal_ranges": {
+    "heart_rate": {
+      "low": 51.0,
+      "high": 90.0
+    },
+    "respiratory_rate": {
+      "low": 12.0,
+      "high": 20.0
+    },
+    "spo2": {
+      "low": 96.0
+    },
+    "sbp": {
+      "low": 111.0,
+      "high": 219.0
+    },
+    "dbp": {
+      "low": 60.0,
+      "high": 90.0
+    },
+    "map": {
+      "low": 70.0
+    },
+    "temperature_c": {
+      "low": 36.1,
+      "high": 38.0
+    },
+    "fio2": {
+      "high": 0.21
+    },
+    "gcs_total": {
+      "low": 15.0
+    },
+    "mechanical_vent": {
+      "high": 0.0
+    },
+    "lactate": {
+      "high": 2.0
+    },
+    "pao2": {
+      "low": 80.0
+    },
+    "pao2_fio2": {
+      "low": 300.0
+    },
+    "bilirubin": {
+      "high": 1.2
+    },
+    "creatinine": {
+      "high": 1.2
+    },
+    "platelets": {
+      "low": 150.0
+    }
+  },
+  "leakage_control": "all features use current/past hours within stay_id only"
+}

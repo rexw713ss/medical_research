@@ -1,0 +1,28 @@
+{
+  "rows": 8275274,
+  "stays": 94444,
+  "minimum_components_for_primary_label": 4,
+  "component_count_distribution": {
+    "0": 48104,
+    "1": 46650,
+    "2": 352510,
+    "3": 370500,
+    "4": 2923846,
+    "5": 3072188,
+    "6": 1461476
+  },
+  "labels": {
+    "label_sofa_increase_ge2_6h": {
+      "valid_rows": 6938122,
+      "prevalence": 0.06460941447844244
+    },
+    "label_sofa_increase_ge2_12h": {
+      "valid_rows": 6445320,
+      "prevalence": 0.11899750516653944
+    },
+    "label_sofa_increase_ge2_24h": {
+      "valid_rows": 5595618,
+      "prevalence": 0.20482098670781315
+    }
+  }
+}

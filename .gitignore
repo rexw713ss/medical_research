@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.uv-cache/
+env/
+
+dataset/
+outputs/
+
+*.csv
+*.csv.gz
+*.pt
+*.pth
+*.pkl
+*.joblib
+
+.agents/

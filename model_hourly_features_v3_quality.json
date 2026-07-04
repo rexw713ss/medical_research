@@ -1,0 +1,116 @@
+{
+  "rows": 8275274,
+  "stays": 94444,
+  "features": {
+    "heart_rate": {
+      "observed_rows": 8209690,
+      "observed_fraction": 0.9920747035083068,
+      "minimum": 20.0,
+      "maximum": 295.0
+    },
+    "respiratory_rate": {
+      "observed_rows": 8199181,
+      "observed_fraction": 0.9908047757693582,
+      "minimum": 1.0,
+      "maximum": 80.0
+    },
+    "spo2": {
+      "observed_rows": 8205003,
+      "observed_fraction": 0.9915083174285226,
+      "minimum": 50.0,
+      "maximum": 100.0
+    },
+    "sbp": {
+      "observed_rows": 8183093,
+      "observed_fraction": 0.9888606709578438,
+      "minimum": 40.0,
+      "maximum": 299.0
+    },
+    "dbp": {
+      "observed_rows": 8182771,
+      "observed_fraction": 0.9888217598595527,
+      "minimum": 20.0,
+      "maximum": 200.0
+    },
+    "map": {
+      "observed_rows": 8183522,
+      "observed_fraction": 0.9889125121415919,
+      "minimum": 20.0,
+      "maximum": 250.0
+    },
+    "temperature_c": {
+      "observed_rows": 8042662,
+      "observed_fraction": 0.9718907192680266,
+      "minimum": 25.0,
+      "maximum": 43.11111111111111
+    },
+    "fio2": {
+      "observed_rows": 5631819,
+      "observed_fraction": 0.6805598219466812,
+      "minimum": 0.21,
+      "maximum": 1.0
+    },
+    "gcs_total": {
+      "observed_rows": 8144113,
+      "observed_fraction": 0.9841502529100546,
+      "minimum": 3.0,
+      "maximum": 15.0
+    },
+    "mechanical_vent": {
+      "observed_rows": 8275274,
+      "observed_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "lactate": {
+      "observed_rows": 5857030,
+      "observed_fraction": 0.7077747516275594,
+      "minimum": 0.0,
+      "maximum": 29.6
+    },
+    "pao2": {
+      "observed_rows": 6050763,
+      "observed_fraction": 0.7311858193456797,
+      "minimum": 20.0,
+      "maximum": 782.0
+    },
+    "pao2_fio2": {
+      "observed_rows": 5172377,
+      "observed_fraction": 0.6250399684650925,
+      "minimum": 20.0,
+      "maximum": 2347.6190476190477
+    },
+    "bilirubin": {
+      "observed_rows": 5035994,
+      "observed_fraction": 0.608559184868078,
+      "minimum": 0.0,
+      "maximum": 79.2
+    },
+    "creatinine": {
+      "observed_rows": 7793042,
+      "observed_fraction": 0.9417261591579928,
+      "minimum": 0.1,
+      "maximum": 29.7
+    },
+    "platelets": {
+      "observed_rows": 7764886,
+      "observed_fraction": 0.9383237340540023,
+      "minimum": 5.0,
+      "maximum": 1992.0
+    }
+  },
+  "labels": {
+    "label_sofa_increase_ge2_6h": {
+      "valid_rows": 6938122,
+      "prevalence": 0.06460941447844244
+    },
+    "label_sofa_increase_ge2_12h": {
+      "valid_rows": 6445320,
+      "prevalence": 0.11899750516653944
+    },
+    "label_sofa_increase_ge2_24h": {
+      "valid_rows": 5595618,
+      "prevalence": 0.20482098670781315
+    }
+  }
+}
