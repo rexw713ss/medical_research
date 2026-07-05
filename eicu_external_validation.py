@@ -45,14 +45,16 @@ from project_config import (
     PATIENT_SPLIT_CSV,
     PRIMARY_HOURLY_FEATURES,
 )
-from run_observation_window_sensitivity import prepare_explicit_arrays
-from train_fnn import choose_device, load_training_frame
+from train_fnn import choose_device, load_training_frame, prepare_explicit_temporal_arrays
 
 
 DEFAULT_CHECKPOINT = (
-    "outputs/explicit_temporal_observation_sensitivity_6h/"
-    "seed_42/observation_24h_explicit/best_model.pt"
+    "outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt"
 )
+DEFAULT_MIMIC_VALIDATION_PREDICTIONS = (
+    "outputs/final_test_evaluation_6h/predictions/val_predictions.csv.gz"
+)
+DEFAULT_FINAL_TEST_LOCK = "outputs/final_test_evaluation_6h/FINAL_TEST_LOCK.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,6 +64,11 @@ def parse_args() -> argparse.Namespace:
         default="outputs/eicu_external_validation/eicu_hourly_features.pkl",
     )
     parser.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT)
+    parser.add_argument(
+        "--mimic-validation-predictions",
+        default=DEFAULT_MIMIC_VALIDATION_PREDICTIONS,
+    )
+    parser.add_argument("--final-test-lock", default=DEFAULT_FINAL_TEST_LOCK)
     parser.add_argument("--mimic-csv", default=PRIMARY_HOURLY_FEATURES)
     parser.add_argument("--split-manifest", default=PATIENT_SPLIT_CSV)
     parser.add_argument("--equal-sample-windows", default=EQUAL_SAMPLE_WINDOWS_CSV)
@@ -102,7 +109,13 @@ def load_frozen_model(
     checkpoint_seq = int(checkpoint_args.get("seq_length", seq_length))
     if checkpoint_seq != seq_length:
         raise ValueError(f"checkpoint seq_length={checkpoint_seq}, requested={seq_length}")
-    if not checkpoint.get("explicit_temporal_features", False):
+    explicit_temporal = bool(
+        checkpoint.get(
+            "explicit_temporal_features",
+            checkpoint_args.get("explicit_temporal_features", False),
+        )
+    )
+    if not explicit_temporal:
         raise ValueError("External pipeline requires the explicit-temporal checkpoint.")
     model = TemporalAttentionFNN(
         feature_configs=expert_feature_config,
@@ -112,6 +125,7 @@ def load_frozen_model(
         threshold=float(checkpoint_args.get("threshold", 7.0)),
         rule_score_scale=float(checkpoint_args.get("rule_score_scale", 0.2)),
         use_explicit_temporal_features=True,
+        explicit_temporal_scale=float(checkpoint_args.get("explicit_temporal_scale", 1.0)),
     ).to(device)
     model.load_state_dict(checkpoint["model_state_dict"], strict=True)
     model.eval()
@@ -178,6 +192,20 @@ def mimic_validation_predictions(
     if cache_path.exists() and not args.force_mimic_predictions:
         return pd.read_csv(cache_path)
 
+    frozen_predictions = Path(args.mimic_validation_predictions)
+    if frozen_predictions.exists() and not args.force_mimic_predictions:
+        predictions = pd.read_csv(frozen_predictions)
+        if "y_prob_raw" not in predictions.columns:
+            if "y_prob" not in predictions.columns:
+                raise ValueError("Frozen MIMIC validation predictions lack y_prob.")
+            predictions = predictions.rename(columns={"y_prob": "y_prob_raw"})
+        required = {"subject_id", "stay_id", "sofa_hour", "y_true", "y_prob_raw"}
+        missing = required - set(predictions.columns)
+        if missing:
+            raise ValueError(f"Frozen MIMIC validation predictions missing: {sorted(missing)}")
+        predictions.to_csv(cache_path, index=False, compression="gzip")
+        return predictions
+
     input_order = explicit_temporal_input_order(FEATURE_ORDER)
     frame = load_training_frame(
         Path(args.mimic_csv),
@@ -190,7 +218,7 @@ def mimic_validation_predictions(
         args.chunk_size,
         None,
     )
-    features, labels, stay_ids, subject_ids, time_values = prepare_explicit_arrays(
+    features, labels, stay_ids, subject_ids, time_values = prepare_explicit_temporal_arrays(
         frame,
         args.target_col,
         "sofa_hour",
@@ -290,7 +318,7 @@ def external_predictions(
     frame = pd.read_pickle(args.hourly_pickle)
     frame = frame.sort_values(["stay_id", "sofa_hour"], kind="mergesort").reset_index(drop=True)
     input_order = explicit_temporal_input_order(FEATURE_ORDER)
-    features, labels, stay_ids, subject_ids, time_values = prepare_explicit_arrays(
+    features, labels, stay_ids, subject_ids, time_values = prepare_explicit_temporal_arrays(
         frame,
         args.target_col,
         "sofa_hour",
@@ -383,13 +411,29 @@ def optimized_cluster_bootstrap(
     codes_desc = codes[descending]
     positive_desc = y_desc == 1
     squared_error = (score - y) ** 2
+    subject_window_count = np.bincount(codes, minlength=len(subjects)).astype(np.float64)
+    subject_squared_error = np.bincount(
+        codes,
+        weights=squared_error,
+        minlength=len(subjects),
+    )
+    positive = y == 1
+    negative = ~positive
+    operating_subject_counts = {}
+    for specificity, threshold in thresholds.items():
+        predicted = score >= threshold
+        operating_subject_counts[specificity] = {
+            "tp": np.bincount(codes, weights=(predicted & positive), minlength=len(subjects)),
+            "fn": np.bincount(codes, weights=((~predicted) & positive), minlength=len(subjects)),
+            "tn": np.bincount(codes, weights=((~predicted) & negative), minlength=len(subjects)),
+            "fp": np.bincount(codes, weights=(predicted & negative), minlength=len(subjects)),
+        }
     rows = []
     for replicate in range(reps):
         subject_weights = rng.multinomial(
             len(subjects), np.full(len(subjects), 1.0 / len(subjects))
         ).astype(np.float64)
-        weights = subject_weights[codes]
-        total_weight = weights.sum()
+        total_weight = float(np.dot(subject_weights, subject_window_count))
 
         weights_asc = subject_weights[codes_asc]
         positive_by_tie = np.add.reduceat(weights_asc * (y_asc == 1), tie_starts)
@@ -415,20 +459,20 @@ def optimized_cluster_bootstrap(
             "replicate": replicate,
             "auroc": float(auroc),
             "auprc": float(auprc),
-            "brier": float(np.sum(weights * squared_error) / total_weight),
+            "brier": float(np.dot(subject_weights, subject_squared_error) / total_weight),
         }
-        positive = y == 1
-        negative = ~positive
-        for specificity, threshold in thresholds.items():
-            predicted = score >= threshold
-            tp = np.sum(weights * predicted * positive)
-            fn = np.sum(weights * (~predicted) * positive)
-            tn = np.sum(weights * (~predicted) * negative)
-            fp = np.sum(weights * predicted * negative)
+        for specificity in thresholds:
+            counts = operating_subject_counts[specificity]
+            tp = np.dot(subject_weights, counts["tp"])
+            fn = np.dot(subject_weights, counts["fn"])
+            tn = np.dot(subject_weights, counts["tn"])
+            fp = np.dot(subject_weights, counts["fp"])
             tag = int(round(specificity * 100))
             row[f"sensitivity_at_spec_{tag}"] = float(tp / (tp + fn))
             row[f"specificity_at_spec_{tag}"] = float(tn / (tn + fp))
         rows.append(row)
+        if (replicate + 1) % 50 == 0 or replicate + 1 == reps:
+            print(f"  bootstrap {replicate + 1}/{reps}", flush=True)
     return pd.DataFrame(rows)
 
 
@@ -512,6 +556,8 @@ def write_report(
     raw = metrics["raw"]
     calibrated = metrics["mimic_calibrated"]
     ci = metrics["clustered_ci95"]
+    fixed = metrics["fixed_specificity"]
+    fixed_ci = metrics["fixed_specificity_ci95"]
     lines = [
         "# eICU External Validation",
         "",
@@ -542,13 +588,32 @@ def write_report(
         "",
         f"Patient-clustered 95% CI: AUROC {ci['auroc'][0]:.4f}-{ci['auroc'][1]:.4f}; AUPRC {ci['auprc'][0]:.4f}-{ci['auprc'][1]:.4f}; Brier {ci['brier'][0]:.4f}-{ci['brier'][1]:.4f}.",
         "",
+        "## MIMIC-Defined Operating Points",
+        "",
+        "| Target specificity | Threshold | External specificity | External sensitivity | PPV | NPV |",
+        "|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in fixed:
+        tag = int(round(float(row["target_specificity"]) * 100))
+        sensitivity_ci = fixed_ci[str(tag)]["sensitivity"]
+        specificity_ci = fixed_ci[str(tag)]["specificity"]
+        lines.append(
+            f"| {float(row['target_specificity']):.0%} | {float(row['threshold']):.4f} | "
+            f"{float(row['specificity']):.3f} ({specificity_ci[0]:.3f}-{specificity_ci[1]:.3f}) | "
+            f"{float(row['sensitivity']):.3f} ({sensitivity_ci[0]:.3f}-{sensitivity_ci[1]:.3f}) | "
+            f"{float(row['ppv']):.3f} | {float(row['npv']):.3f} |"
+        )
+    lines.extend(
+        [
+        "",
         "## Provenance",
         "",
         f"- Checkpoint: `{checkpoint_path}`",
         f"- Checkpoint SHA-256: `{checkpoint_sha256}`",
         f"- MIMIC validation windows: {transfer['validation_windows']:,}",
         f"- Cluster bootstrap unit: subject_id ({metrics['bootstrap_reps']} replicates).",
-    ]
+        ]
+    )
     (output_dir / "eicu_external_validation_report.md").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
     )
@@ -560,6 +625,17 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = Path(args.checkpoint)
     checkpoint_sha = sha256_file(checkpoint_path)
+    lock_path = Path(args.final_test_lock)
+    if lock_path.exists():
+        final_lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        if final_lock.get("status") != "complete":
+            raise ValueError("Final-test lock is not complete.")
+        if final_lock.get("checkpoint_sha256", "").lower() != checkpoint_sha.lower():
+            raise ValueError("External checkpoint does not match the locked final checkpoint.")
+        frozen_validation = Path(args.mimic_validation_predictions)
+        expected_hash = final_lock.get("validation_predictions_sha256")
+        if expected_hash and sha256_file(frozen_validation).lower() != expected_hash.lower():
+            raise ValueError("MIMIC validation predictions do not match the final-test lock.")
     device = choose_device(args.device)
     model, checkpoint = load_frozen_model(checkpoint_path, device, args.seq_length)
     specificities = [float(value) for value in args.specificities.split(",")]
@@ -633,6 +709,13 @@ def main() -> None:
         metric: percentile_ci(bootstrap[metric])
         for metric in ("auroc", "auprc", "brier")
     }
+    fixed_ci = {}
+    for specificity in thresholds:
+        tag = int(round(specificity * 100))
+        fixed_ci[str(tag)] = {
+            "sensitivity": percentile_ci(bootstrap[f"sensitivity_at_spec_{tag}"]),
+            "specificity": percentile_ci(bootstrap[f"specificity_at_spec_{tag}"]),
+        }
     metrics = {
         "windows": len(predictions),
         "patients": int(predictions["subject_id"].nunique()),
@@ -642,10 +725,12 @@ def main() -> None:
         "raw": raw_metrics,
         "mimic_calibrated": calibrated_metrics,
         "clustered_ci95": ci,
+        "fixed_specificity": operating_rows,
+        "fixed_specificity_ci95": fixed_ci,
         "bootstrap_reps": args.bootstrap_reps,
         "bootstrap_unit": "subject_id",
         "checkpoint_sha256": checkpoint_sha,
-        "checkpoint_best_epoch": checkpoint.get("best_epoch"),
+        "checkpoint_best_epoch": checkpoint.get("best_epoch", checkpoint.get("epoch")),
         "no_eicu_fitting": True,
     }
     (output_dir / "external_metrics.json").write_text(

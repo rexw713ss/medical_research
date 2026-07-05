@@ -14,11 +14,12 @@
 | 6 h baseline、獨立 test、clustered CI 與 paired comparison | 完成 | `outputs/advanced_evaluation_6h_equal_sample/` |
 | Explicit temporal features 與 4/6/12/24 h observation sensitivity | 完成 | `outputs/explicit_temporal_observation_sensitivity_6h/` |
 | Explicit-temporal FNN 專屬 Optuna tuning | 完成 | `outputs/explicit_temporal_fnn_tuning_6h/` |
-| eICU harmonization、SOFA labels 與 frozen-checkpoint external validation | 完成 | `outputs/eicu_external_validation/` |
+| eICU harmonization、SOFA labels 與 final frozen-checkpoint external validation | 完成；AUROC 0.6221 | `outputs/eicu_external_validation/final_frozen_model_evaluation/` |
 | 新版 FNN full-cohort 6 h training | 完成；test AUROC 0.6559 | `outputs/explicit_temporal_fnn_formal_6h/seed_42/` |
 | Frozen final-model 6 h test evaluation | 完成；1,000 次 patient-clustered bootstrap | `outputs/final_test_evaluation_6h/` |
 | 正式 6 h FNN 消融，4 variants x 3 seeds | 完成 | `outputs/fnn_ablation_6h_equal_sample/` |
 | Frozen-model temporal fuzzy rule extraction | 完成；24 條 supported rules | `outputs/temporal_rule_extraction_6h/` |
+| Rule Evaluation Framework 與 TP/FP/FN timelines | 完成；5 seeds | `outputs/rule_evaluation_6h/` |
 | Baseline paired comparison、scale sensitivity 與最終 external validation | 待完成 | `docs/experiment_status.md` |
 
 ## 正式資料
@@ -43,6 +44,7 @@
 | Observation-window sensitivity | `run_observation_window_sensitivity.py` |
 | 共用消融元件 | `ablation_fnn_experiments.py` |
 | Temporal fuzzy rule extraction | `extract_temporal_fuzzy_rules.py` |
+| Rule Evaluation Framework | `rule_evaluation_framework.py` |
 | Interpretable baselines | `interpretable_baselines.py` |
 | Black-box baselines | `blackbox_baselines.py` |
 | Clinical scores | `clinical_score_baselines.py`, `news2_score.py` |
@@ -90,12 +92,10 @@
 ```powershell
 .\env\Scripts\python.exe eicu_data_audit.py
 .\env\Scripts\python.exe eicu_preprocessing.py --write-csv
-.\env\Scripts\python.exe eicu_external_validation.py --bootstrap-reps 200
+.\env\Scripts\python.exe eicu_external_validation.py --bootstrap-reps 500 --output-dir outputs\eicu_external_validation\final_frozen_model_evaluation
 ```
 
-目前 external test 包含 80,239 位病人、99,262 次 ICU stay、6,215,890 個視窗與 205 家醫院。Frozen 24 h explicit-temporal checkpoint 的 AUROC 為 0.6034（patient-clustered 95% CI 0.6006–0.6059），AUPRC 為 0.0762（0.0748–0.0778）；沒有使用 eICU outcome fitting。
-
-這個 external result 使用 full-cohort 新模型完成前的 frozen checkpoint。新版 full-cohort checkpoint 定案後，需原封不動重跑一次 eICU 才能成為最終論文結果。
+Final external test 包含 80,239 位病人、99,262 次 ICU stay、6,215,890 個視窗與 205 家醫院。Frozen final checkpoint 的 AUROC 為 0.6221（patient-clustered 95% CI 0.6192–0.6249），AUPRC 為 0.0922（0.0902–0.0942）；沒有使用 eICU outcome fitting 或 recalibration。
 
 ## 最新結果索引
 
@@ -106,6 +106,8 @@
 - Frozen final test report：`outputs/final_test_evaluation_6h/final_test_report.md`
 - 正式消融報告：`docs/formal_ablation_study_6h.md`
 - 實際 temporal fuzzy rules：`docs/extracted_temporal_rules_6h.md`
+- Rule Evaluation Framework：`docs/rule_evaluation_framework_6h.md`
+- Final eICU external validation：`docs/eicu_final_external_validation_6h.md`
 - Tuning 報告：`docs/explicit_temporal_fnn_tuning_6h.md`
 - Observation sensitivity：`docs/explicit_temporal_observation_sensitivity.md`
 - MIMIC 6 h baseline report：`docs/mimic_iv_6h_evaluation_report.md`

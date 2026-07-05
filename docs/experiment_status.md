@@ -23,14 +23,14 @@
 | Frozen final-model test evaluation、validation-only calibration、1,000 次 subject bootstrap | `outputs/final_test_evaluation_6h/` |
 | 正式 FNN 消融；4 variants、3 seeds、完整 test | `outputs/fnn_ablation_6h_equal_sample/` |
 | Frozen-model temporal fuzzy rule extraction；24 條 supported rules | `outputs/temporal_rule_extraction_6h/` |
-| eICU harmonization 與 frozen-checkpoint external validation | `outputs/eicu_external_validation/` |
+| Rule Evaluation Framework；5-seed stability、drift、activated rules、TP/FP/FN timelines | `outputs/rule_evaluation_6h/` |
+| eICU final frozen-checkpoint external validation；500 次 subject bootstrap | `outputs/eicu_external_validation/final_frozen_model_evaluation/` |
 
 ## Primary 6 h 尚缺
 
 1. **新版 paired comparison。** Equal-sample explicit FNN checkpoints 與 predictions 已由正式消融產生；需整合 LR、EBM、XGBoost、GRU predictions，重跑至少 500 次 subject-clustered bootstrap、fixed specificity、DCA、lead time、risk strata 與 calibration。
 2. **Scale sensitivity。** 評估 explicit scale 1.0、1.5、2.0、2.5，並檢查 rule scale/double counting。
-3. **Rule-quality 剩餘項目。** IF-THEN table、stability、concordance 與 normalized drift 已完成；尚缺 membership plots、rule complexity 總結與 TP/FP/FN timelines。
-4. **最終 eICU validation。** 使用定案後 checkpoint 原封不動重跑，並補 comparator transport 與 site/domain-shift analyses。
+3. **External supplementary analyses。** Final frozen transport 已完成；尚可補 comparator transport、hospital-level heterogeneity 與 domain-shift analyses。
 
 ## Secondary Analysis
 
@@ -52,6 +52,8 @@
 - Tuning AUROC 0.6515 是 validation performance；full-cohort test AUROC 為 0.6559。
 - Final test 已鎖定 checkpoint SHA-256 `158427a5...9125688`；正式 calibrated Brier 為 0.0521、ECE 為 0.0012。
 - 消融顯示 temporal design 是主要效能來源（paired AUROC +0.0510）；consistency loss 未改善 AUROC，僅 Rule Stability 呈現方向性提升。
+- Rule Evaluation：Top-10 complexity 1.44 antecedents、5-seed Jaccard 0.720；正負 windows 平均 activated rules 為 1.833 與 1.819。
+- Final eICU：AUROC 0.6221、AUPRC 0.0922；MIMIC thresholds 未維持目標 specificity，應列為 transportability limitation。
 - Full-cohort FNN 與 equal-sample baselines 不可作 primary 公平效能宣稱。
 - Hourly windows 彼此相關；CI 與模型差異必須以 `subject_id` 為 bootstrap cluster。
 - eICU 不可用於 hyperparameter selection 或 primary recalibration。

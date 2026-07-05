@@ -14,7 +14,8 @@
 | 正式消融 predictive performance、calibration、component effects、rule quality | `outputs/fnn_ablation_6h_equal_sample/figures/` |
 | Observation-window sensitivity、explicit temporal coefficients | `outputs/explicit_temporal_observation_sensitivity_6h/figures/` |
 | Baseline ROC、PR、calibration、DCA、risk strata | `outputs/advanced_evaluation_6h_equal_sample/figures/` |
-| eICU external ROC/PR、calibration、risk strata | `outputs/eicu_external_validation/evaluation/figures/` |
+| Rule membership before/after、TP/FP/FN timelines | `outputs/rule_evaluation_6h/figures/` |
+| Final eICU external ROC/PR、calibration、risk strata | `outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
 
 ## Primary Evaluation 尚待產生
 
@@ -24,10 +25,10 @@
 ## 消融與規則圖
 
 - 四組消融 AUROC/AUPRC 與 rule-quality comparison已產生。
-- Membership functions before/after training。
+- Membership functions before/after training已產生。
 - Temporal coefficient heatmap。
 - Top-K rule stability across seeds。
-- True-positive、false-positive、false-negative patient timelines。
+- True-positive、false-positive、false-negative patient timelines已產生。
 
 ## Cohort 與 External Validation
 
