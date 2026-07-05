@@ -1,0 +1,28 @@
+{
+  "best_value_val_auroc": 0.6514679782196601,
+  "best_params": {
+    "learning_rate": 0.004890680584284259,
+    "weight_decay": 0.0002805076936137263,
+    "batch_size": 256,
+    "rule_score_scale": 0.41891677590580206,
+    "threshold": 8.641503637927855,
+    "attention_hidden": 16,
+    "lambda_cons": 0.3227659576985091,
+    "lambda_sparse": 0.0008813439921520985,
+    "lambda_drift": 0.0008791806965182073,
+    "lambda_nonnegative": 0.07821714254678146,
+    "grad_clip": 5.0,
+    "explicit_temporal_scale": 1.9896207508648693
+  },
+  "best_trial_number": 24,
+  "best_trial_user_attrs": {
+    "best_val_auprc": 0.12319149182377864,
+    "best_val_loss": 1.2759396028518677,
+    "last_train_loss": 1.2652175103378296,
+    "last_val_loss": 1.2759396028518677
+  },
+  "model_design": "explicit_temporal",
+  "target_col": "label_sofa_increase_ge2_6h",
+  "seq_length": 24,
+  "comparison_mode": "equal_sample"
+}

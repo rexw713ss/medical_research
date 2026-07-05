@@ -1,0 +1,21 @@
+{
+  "predictions_root": "outputs\\final_test_evaluation_6h\\predictions",
+  "patient_split": "patient_split.csv",
+  "sofa_csv": "sofa_scores_hourly.csv",
+  "target_col": "label_sofa_increase_ge2_6h",
+  "horizon": 6,
+  "bootstrap_reps": 1000,
+  "seed": 42,
+  "specificities": "0.90,0.95",
+  "risk_quantiles": "0.60,0.85",
+  "n_bins": 10,
+  "figures_only": false,
+  "dca_max_threshold": 0.2,
+  "output_dir": "outputs\\final_test_evaluation_6h\\advanced",
+  "models": [
+    "final_test_evaluation_6h:explicit_temporal_fnn"
+  ],
+  "bootstrap_unit": "subject_id",
+  "calibration": "Platt scaling fit on validation only and applied unchanged to test",
+  "calibration_curve_binning": "equal-frequency quantile bins on independent test"
+}

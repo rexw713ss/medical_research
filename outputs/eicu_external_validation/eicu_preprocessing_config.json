@@ -1,0 +1,34 @@
+{
+  "dataset_dir": "dataset\\e-ICU",
+  "output_dir": "outputs\\eicu_external_validation",
+  "chunksize": 1000000,
+  "rolling_hours": 24,
+  "label_horizons": [
+    6
+  ],
+  "min_components": 4,
+  "min_age": 18,
+  "max_stays": null,
+  "max_chunks": null,
+  "force": false,
+  "write_csv": true,
+  "model_feature_order": [
+    "heart_rate",
+    "respiratory_rate",
+    "spo2",
+    "fio2",
+    "temperature_c",
+    "sbp",
+    "gcs_total",
+    "map",
+    "pao2_fio2",
+    "platelets",
+    "bilirubin",
+    "creatinine",
+    "lactate"
+  ],
+  "output_pickle": "outputs\\eicu_external_validation\\eicu_hourly_features.pkl",
+  "output_csv": "outputs\\eicu_external_validation\\eicu_hourly_features.csv.gz",
+  "quality_report": "outputs\\eicu_external_validation\\eicu_hourly_quality.json",
+  "rows": 12994585
+}

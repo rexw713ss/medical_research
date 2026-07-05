@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "locked_at_utc": "2026-07-04T16:59:17.148502+00:00",
+  "primary_outcome": "label_sofa_increase_ge2_6h",
+  "run_dir": "outputs\\explicit_temporal_fnn_formal_6h\\seed_42",
+  "checkpoint": "outputs\\explicit_temporal_fnn_formal_6h\\seed_42\\best_model.pt",
+  "checkpoint_sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688",
+  "checkpoint_epoch": 15,
+  "bootstrap_reps": 1000,
+  "bootstrap_unit": "subject_id",
+  "specificities": [
+    0.9,
+    0.95
+  ],
+  "calibration": "validation-only Platt scaling applied unchanged to test",
+  "test_access_note": "train_fnn.py produced the initial test_metrics.csv only after freezing this checkpoint; this locked run adds prespecified calibration, operating points and clustered uncertainty without changing or selecting the model.",
+  "completed_at_utc": "2026-07-04T17:12:08.889385+00:00",
+  "validation_predictions_sha256": "97ce2cec1af52d12c1c2237859f131f1709efad71c27fabb2a8f14cd393a55d5",
+  "test_predictions_sha256": "a0ef7da975a75a42105bb40380efb8579e57862009961151227a272eb593bde1",
+  "advanced_metrics_sha256": "33872fc1861347d3eb0f4108d77a59b1187848975e940762405da0d141c670c4"
+}

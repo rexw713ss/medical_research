@@ -1,0 +1,104 @@
+{
+  "windows": 6215890,
+  "patients": 80239,
+  "stays": 99262,
+  "hospitals": 205,
+  "prevalence": 0.04745080752716023,
+  "raw": {
+    "auroc": 0.622134298922451,
+    "auprc": 0.09218263804996422,
+    "accuracy": 0.6007163897688023,
+    "precision": 0.06639062067521558,
+    "recall": 0.567637116925299,
+    "sensitivity": 0.567637116925299,
+    "specificity": 0.6023642187956273,
+    "f1": 0.1188773874581033,
+    "brier": 0.24442607592484086,
+    "log_loss": 0.6866351322819984,
+    "prevalence": 0.04745080694556236,
+    "ece": 0.43398671525406324,
+    "mce": 0.6710488167549569,
+    "calibration_intercept": -3.040977635479727,
+    "calibration_slope": 0.7803176170798474
+  },
+  "mimic_calibrated": {
+    "auroc": 0.622134298922451,
+    "auprc": 0.09218263804996422,
+    "accuracy": 0.9520705803995888,
+    "precision": 0.3246906305244549,
+    "recall": 0.009340597866071762,
+    "sensitivity": 0.009340597866071762,
+    "specificity": 0.9990322484213235,
+    "f1": 0.018158808834870185,
+    "brier": 0.0459356398644667,
+    "log_loss": 0.19236407884996887,
+    "prevalence": 0.04745080694556236,
+    "ece": 0.026685150119925345,
+    "mce": 0.32227505202601814,
+    "calibration_intercept": -1.1273681888124594,
+    "calibration_slope": 0.731968679108863
+  },
+  "clustered_ci95": {
+    "auroc": [
+      0.6192343843265544,
+      0.6248788090900306
+    ],
+    "auprc": [
+      0.0902127555312328,
+      0.09419943368352228
+    ],
+    "brier": [
+      0.04549126699161025,
+      0.046321799040026534
+    ]
+  },
+  "fixed_specificity": [
+    {
+      "threshold": 0.09239141105155539,
+      "sensitivity": 0.3772550508732018,
+      "specificity": 0.7896776880566788,
+      "ppv": 0.08202335731771952,
+      "npv": 0.9622008296234468,
+      "f1": 0.1347493166925619,
+      "threshold_source": "MIMIC validation specificity 0.90",
+      "target_specificity": 0.9
+    },
+    {
+      "threshold": 0.11640069612677208,
+      "sensitivity": 0.26225550857944935,
+      "specificity": 0.8818660750039563,
+      "ppv": 0.09957570389899281,
+      "npv": 0.9599937415817472,
+      "f1": 0.14434507564624707,
+      "threshold_source": "MIMIC validation specificity 0.95",
+      "target_specificity": 0.95
+    }
+  ],
+  "fixed_specificity_ci95": {
+    "90": {
+      "sensitivity": [
+        0.37157405688920003,
+        0.3827241040246877
+      ],
+      "specificity": [
+        0.7868836001890425,
+        0.7927517644295683
+      ]
+    },
+    "95": {
+      "sensitivity": [
+        0.2572450671103779,
+        0.26723109906049086
+      ],
+      "specificity": [
+        0.8796658866070471,
+        0.8843731611297786
+      ]
+    }
+  },
+  "bootstrap_reps": 500,
+  "bootstrap_unit": "subject_id",
+  "checkpoint_sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688",
+  "checkpoint_best_epoch": 15,
+  "no_eicu_fitting": true
+}

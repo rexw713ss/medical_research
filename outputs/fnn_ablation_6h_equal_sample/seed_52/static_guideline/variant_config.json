@@ -1,0 +1,23 @@
+{
+  "name": "static_guideline",
+  "seed": 52,
+  "display_name": "Guideline-guided FNN without temporal features",
+  "description": "Expert-guided FNN using only the current hour; target times remain aligned to temporal variants.",
+  "expert_init": true,
+  "temporal_design": false,
+  "clinical_consistency": false,
+  "input_seq_length": 1,
+  "min_history_length": 24,
+  "lambda_cons": 0.0,
+  "lambda_drift": 0.0008791806965182073,
+  "explicit_temporal_features": false,
+  "train_windows": 200000,
+  "val_windows": 50000,
+  "train_positive": 11326,
+  "train_negative": 188674,
+  "val_positive": 2906,
+  "val_negative": 47094,
+  "test_windows": 830839,
+  "test_positive": 47292,
+  "test_negative": 783547
+}

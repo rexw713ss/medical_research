@@ -1,0 +1,32 @@
+[
+  {
+    "split": "train",
+    "target_col": "label_sofa_increase_ge2_6h",
+    "horizon_hours": 6,
+    "windows": 3843400,
+    "positive": 217650,
+    "negative": 3625750,
+    "prevalence": 0.05662954675547692,
+    "cohort_sha256": "01c84dbfa19a680e2645006e5cc5e56a6f747636b3e5ad2e9bf93968beb85062"
+  },
+  {
+    "split": "validation",
+    "target_col": "label_sofa_increase_ge2_6h",
+    "horizon_hours": 6,
+    "windows": 819573,
+    "positive": 47638,
+    "negative": 771935,
+    "prevalence": 0.05812538968462846,
+    "cohort_sha256": "87ba42c5c12be7b6b1113d8b347fb31711f1b2ad2100d03564e35f287ec1cd9a"
+  },
+  {
+    "split": "test",
+    "target_col": "label_sofa_increase_ge2_6h",
+    "horizon_hours": 6,
+    "windows": 830839,
+    "positive": 47292,
+    "negative": 783547,
+    "prevalence": 0.056920775264521765,
+    "cohort_sha256": "5a3afc9059e6a5dbf7f7e3da3f0297c07889e7dec19a65fe77122c2e157168db"
+  }
+]

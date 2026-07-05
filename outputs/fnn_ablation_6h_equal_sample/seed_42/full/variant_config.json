@@ -1,0 +1,23 @@
+{
+  "name": "full",
+  "seed": 42,
+  "display_name": "Full Knowledge-Guided Temporal FNN",
+  "description": "Expert-guided temporal FNN with clinical consistency regularization.",
+  "expert_init": true,
+  "temporal_design": true,
+  "clinical_consistency": true,
+  "input_seq_length": 24,
+  "min_history_length": 24,
+  "lambda_cons": 0.3227659576985091,
+  "lambda_drift": 0.0008791806965182073,
+  "explicit_temporal_features": true,
+  "train_windows": 200000,
+  "val_windows": 50000,
+  "train_positive": 11326,
+  "train_negative": 188674,
+  "val_positive": 2906,
+  "val_negative": 47094,
+  "test_windows": 830839,
+  "test_positive": 47292,
+  "test_negative": 783547
+}

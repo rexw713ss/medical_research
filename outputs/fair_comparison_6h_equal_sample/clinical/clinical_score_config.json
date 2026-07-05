@@ -1,0 +1,77 @@
+{
+  "feature_csv": "model_hourly_features.csv",
+  "sofa_csv": null,
+  "time_col": "sofa_hour",
+  "split_col": "subject_id",
+  "split_manifest": "patient_split.csv",
+  "comparison_mode": "equal_sample",
+  "comparison_protocol": "comparison_protocol.json",
+  "equal_sample_windows": "equal_sample_windows.csv.gz",
+  "seq_length": 24,
+  "allow_incomplete_cohort": false,
+  "horizons": [
+    6
+  ],
+  "val_frac": 0.15,
+  "seed": 42,
+  "max_rows": 0,
+  "max_stays": 0,
+  "chunk_size": 500000,
+  "save_predictions": true,
+  "output_dir": "outputs\\fair_comparison_6h_equal_sample\\clinical",
+  "metadata": {
+    "feature_csv": "model_hourly_features.csv",
+    "sofa_csv": null,
+    "column_map": {
+      "heart_rate": "heart_rate",
+      "respiratory_rate": "respiratory_rate",
+      "spo2": "spo2",
+      "fio2": "fio2",
+      "temperature_c": "temperature_c",
+      "sbp": "sbp",
+      "gcs_total": "gcs_total",
+      "gcs_eye": "gcs_eye",
+      "gcs_verbal": "gcs_verbal",
+      "gcs_motor": "gcs_motor"
+    },
+    "rows": 8275274,
+    "stays": 94444,
+    "patients": 65355
+  },
+  "train_patients": 45746,
+  "val_patients": 9807,
+  "test_patients": 9802,
+  "comparison_protocol_sha256": "47629531beb32b3d2022e37471835ca592d7779197b7fe3696ee1cc8fc3ad184",
+  "cohort_audit": [
+    {
+      "split": "train",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 200000,
+      "positive": 11326,
+      "negative": 188674,
+      "prevalence": 0.05663,
+      "cohort_sha256": "322baea356ba6995a4a5146cc8a1916397e441dbdea5e2934e3512f8b99f173a"
+    },
+    {
+      "split": "validation",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 50000,
+      "positive": 2906,
+      "negative": 47094,
+      "prevalence": 0.05812,
+      "cohort_sha256": "efd4a21c2cd57ac6fc6f620bdc02a3ae1b8193d22ea2a7703986a8f6f62ede0d"
+    },
+    {
+      "split": "test",
+      "target_col": "label_sofa_increase_ge2_6h",
+      "horizon_hours": 6,
+      "windows": 830839,
+      "positive": 47292,
+      "negative": 783547,
+      "prevalence": 0.056920775264521765,
+      "cohort_sha256": "5a3afc9059e6a5dbf7f7e3da3f0297c07889e7dec19a65fe77122c2e157168db"
+    }
+  ]
+}

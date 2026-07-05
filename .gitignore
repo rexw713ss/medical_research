@@ -4,7 +4,6 @@ __pycache__/
 env/
 
 dataset/
-outputs/
 
 *.csv
 *.csv.gz
@@ -14,3 +13,5 @@ outputs/
 *.joblib
 
 .agents/
+
+paper/

@@ -1,0 +1,19 @@
+{
+  "run_dir": "outputs\\explicit_temporal_fnn_formal_6h\\seed_42",
+  "output_dir": "outputs\\temporal_rule_extraction_6h",
+  "markdown": "docs\\extracted_temporal_rules_6h.md",
+  "device": "cuda",
+  "batch_size": 512,
+  "top_k": 10,
+  "membership_threshold": 0.5,
+  "cross_membership_threshold": 0.35,
+  "min_support": 100,
+  "max_rows": 0,
+  "max_stays": 0,
+  "max_test_windows": 0,
+  "checkpoint_sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688",
+  "test_windows": 830839,
+  "test_prevalence": 0.056920775264521765,
+  "eligible_rules": 24,
+  "ranking_uses_outcome": false
+}

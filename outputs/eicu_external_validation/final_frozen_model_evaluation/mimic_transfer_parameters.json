@@ -1,0 +1,24 @@
+{
+  "source_database": "MIMIC-IV validation only",
+  "checkpoint_sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688",
+  "calibration": {
+    "method": "Platt logistic calibration on raw-probability logit",
+    "intercept": -2.614332305327702,
+    "slope": 1.066052629932026
+  },
+  "specificity_thresholds": {
+    "0.9": 0.09239141105155539,
+    "0.95": 0.11640069612677208
+  },
+  "risk_quantiles": [
+    0.6,
+    0.85
+  ],
+  "risk_cutoffs": [
+    0.0544176386848271,
+    0.08250713797630894
+  ],
+  "validation_windows": 819573,
+  "validation_prevalence": 0.05812538968462846,
+  "no_eicu_outcome_used": true
+}

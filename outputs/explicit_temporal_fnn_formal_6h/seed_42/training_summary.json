@@ -1,0 +1,12 @@
+{
+  "requested_epochs": 20,
+  "actual_epochs": 20,
+  "best_epoch": 15,
+  "best_val_auroc": 0.6624919342294658,
+  "best_val_loss": 1.2635886463819406,
+  "stopped_early": true,
+  "early_stopping_patience": 5,
+  "early_stopping_min_epochs": 10,
+  "early_stopping_min_delta": 0.0001,
+  "applied_best_params": {}
+}

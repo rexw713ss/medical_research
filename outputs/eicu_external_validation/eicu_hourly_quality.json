@@ -1,0 +1,148 @@
+{
+  "database": "eICU-CRD",
+  "rows": 12994585,
+  "stays": 200232,
+  "patients": 138868,
+  "hospitals": 208,
+  "features": {
+    "heart_rate": {
+      "observed_hourly_rows": 12542679,
+      "observed_fraction": 0.9652235142561305,
+      "stays_with_measurement": 194872
+    },
+    "respiratory_rate": {
+      "observed_hourly_rows": 11713431,
+      "observed_fraction": 0.9014086252081155,
+      "stays_with_measurement": 193645
+    },
+    "spo2": {
+      "observed_hourly_rows": 11978701,
+      "observed_fraction": 0.9218225129929121,
+      "stays_with_measurement": 193644
+    },
+    "fio2": {
+      "observed_hourly_rows": 2208381,
+      "observed_fraction": 0.16994625068826746,
+      "stays_with_measurement": 71713
+    },
+    "temperature_c": {
+      "observed_hourly_rows": 3849752,
+      "observed_fraction": 0.29625817215401645,
+      "stays_with_measurement": 183067
+    },
+    "sbp": {
+      "observed_hourly_rows": 11386628,
+      "observed_fraction": 0.8762594573047158,
+      "stays_with_measurement": 189717
+    },
+    "gcs_total": {
+      "observed_hourly_rows": 2548856,
+      "observed_fraction": 0.19614754915220456,
+      "stays_with_measurement": 138245
+    },
+    "map": {
+      "observed_hourly_rows": 11403462,
+      "observed_fraction": 0.8775549199916735,
+      "stays_with_measurement": 189745
+    },
+    "pao2_fio2": {
+      "observed_hourly_rows": 115726,
+      "observed_fraction": 0.008905709570563431,
+      "stays_with_measurement": 33000
+    },
+    "platelets": {
+      "observed_hourly_rows": 575608,
+      "observed_fraction": 0.044295989444834136,
+      "stays_with_measurement": 159035
+    },
+    "bilirubin": {
+      "observed_hourly_rows": 209209,
+      "observed_fraction": 0.016099706146829623,
+      "stays_with_measurement": 84975
+    },
+    "creatinine": {
+      "observed_hourly_rows": 662724,
+      "observed_fraction": 0.05100001269759673,
+      "stays_with_measurement": 165877
+    },
+    "lactate": {
+      "observed_hourly_rows": 129508,
+      "observed_fraction": 0.009966305195587239,
+      "stays_with_measurement": 48371
+    }
+  },
+  "sofa_component_count": {
+    "0": 123716,
+    "1": 712188,
+    "2": 1342536,
+    "3": 2262950,
+    "4": 4677160,
+    "5": 2994264,
+    "6": 881771
+  },
+  "labels": {
+    "label_sofa_increase_ge2_6h": {
+      "valid_rows": 7821053,
+      "positive_rows": 421089,
+      "prevalence": 0.053840448338606066
+    }
+  },
+  "extraction": {
+    "vital_periodic": {
+      "source_rows_read": 146671642,
+      "eligible_rows": 145736206,
+      "hourly_rows": 12401520,
+      "seconds": 274.69890599977225
+    },
+    "vital_aperiodic": {
+      "source_rows_read": 25075074,
+      "eligible_rows": 24935625,
+      "hourly_rows": 10206543,
+      "seconds": 34.34223179984838
+    },
+    "labs": {
+      "source_rows_read": 39132531,
+      "relevant_rows": 1901407,
+      "hourly_rows": 1019265,
+      "seconds": 48.96954680001363
+    },
+    "nurse_charting": {
+      "source_rows_read": 151604232,
+      "relevant_rows": 52204521,
+      "valid_feature_rows": {
+        "gcs_total": 2653387,
+        "heart_rate_nurse": 14810719,
+        "respiratory_rate_nurse": 13360581,
+        "spo2_nurse": 12398938,
+        "temperature_c_nurse": 8809334
+      },
+      "hourly_rows": 9572113,
+      "seconds": 398.49183209985495
+    },
+    "respiratory": {
+      "source_rows_read": 20168176,
+      "relevant_rows": 4572294,
+      "valid_fio2_rows": 2977357,
+      "respiratory_support_rows": 1565925,
+      "hourly_rows": 2273766,
+      "seconds": 30.87739529972896
+    },
+    "pressors": {
+      "source_rows_read": 4803719,
+      "pressor_rows": 776364,
+      "convertible_positive_rows": 104395,
+      "excluded_unconvertible_or_zero_rows": 671969,
+      "hourly_rows": 83045,
+      "seconds": 11.07682149996981
+    },
+    "urine": {
+      "source_rows_read": 12030289,
+      "urinary_label_rows": 2970314,
+      "plausible_numeric_rows": 2969226,
+      "hourly_rows": 2936849,
+      "seconds": 45.460762799717486
+    }
+  },
+  "leakage_control": "within-stay current/past measurements only; no backward fill",
+  "schema_version": "eicu_mimic_harmonized_v1"
+}

@@ -1,0 +1,31 @@
+{
+  "predictions_root": "outputs\\fair_comparison_6h_equal_sample",
+  "patient_split": "patient_split.csv",
+  "sofa_csv": "sofa_scores_hourly.csv",
+  "target_col": "label_sofa_increase_ge2_6h",
+  "horizon": 6,
+  "bootstrap_reps": 500,
+  "seed": 42,
+  "specificities": "0.90,0.95",
+  "risk_quantiles": "0.60,0.85",
+  "n_bins": 10,
+  "dca_max_threshold": 0.2,
+  "output_dir": "outputs\\advanced_evaluation_6h_equal_sample",
+  "models": [
+    "blackbox_6h/protocol/lightgbm",
+    "blackbox_6h/protocol/random_forest",
+    "blackbox_6h/protocol/xgboost",
+    "blackbox_6h/sequence_raw/gru",
+    "blackbox_6h/sequence_raw/lstm",
+    "clinical/clinical_score/news2_score_calibrated",
+    "clinical/clinical_score/sofa_score_calibrated",
+    "fair_comparison_6h_equal_sample:fnn_6h",
+    "interpretable_6h/protocol/decision_tree",
+    "interpretable_6h/protocol/ebm",
+    "interpretable_6h/protocol/gam",
+    "interpretable_6h/protocol/logistic_regression"
+  ],
+  "bootstrap_unit": "subject_id",
+  "calibration": "Platt scaling fit on validation only and applied unchanged to test",
+  "calibration_curve_binning": "equal-frequency quantile bins on independent test"
+}
