@@ -29,6 +29,7 @@
 - `sofa_score_complete`：僅六個 component 全部可觀測時提供分數。
 - `sofa_score`：主要分析分數，至少需要 4 個可觀測 component。
 - 未來 6、12、24 小時標籤只在目前與未來均有有效 SOFA、且具有完整預測 horizon 時建立。
+- 6 小時 label 為 primary outcome；12/24 小時 labels 僅供 secondary analyses。
 
 ## 正式輸出
 

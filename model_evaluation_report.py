@@ -43,6 +43,7 @@ from comparison_protocol import (
 from patient_split import attach_split, split_ids_for_values
 from project_config import (
     COMPARISON_PROTOCOL_JSON,
+    DEFAULT_PREDICTION_HORIZONS,
     EQUAL_SAMPLE_WINDOWS_CSV,
     PATIENT_SPLIT_CSV,
     PRIMARY_HOURLY_FEATURES,
@@ -953,7 +954,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--comparison-protocol", default=COMPARISON_PROTOCOL_JSON)
     parser.add_argument("--equal-sample-windows", default=EQUAL_SAMPLE_WINDOWS_CSV)
     parser.add_argument("--seq-length", type=int, default=24)
-    parser.add_argument("--horizons", default="6,12,24")
+    parser.add_argument(
+        "--horizons",
+        default=",".join(map(str, DEFAULT_PREDICTION_HORIZONS)),
+        help="Primary report defaults to 6; pass 12,24 explicitly for secondary reports.",
+    )
     parser.add_argument("--val-frac", type=float, default=0.15, help="舊版相容參數；正式比例由 manifest 決定。")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-rows", type=int, default=0)

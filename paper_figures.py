@@ -279,11 +279,17 @@ def generate_ablation_figures(summary_csv: str | Path, output_dir: str | Path) -
         auroc_col = f"{metric_prefix}_auroc"
         auprc_col = f"{metric_prefix}_auprc"
         quality_cols = [
-            ("rule_drift_loss", "Rule drift loss"),
-            ("active_rule_fraction_gt_0_1", "Activated rule fraction"),
-            ("attention_entropy", "Attention entropy"),
+            ("rule_concordance", "Rule concordance"),
+            ("rule_stability", "Top-10 rule stability"),
+            ("rule_drift_normalized", "Normalized rule drift"),
         ]
-        numeric_cols = [auroc_col, auprc_col, *[col for col, _ in quality_cols]]
+        calibration_cols = ["test_brier", "test_ece"]
+        numeric_cols = [
+            auroc_col,
+            auprc_col,
+            *calibration_cols,
+            *[col for col, _ in quality_cols if col != "rule_stability"],
+        ]
         available_numeric = [col for col in numeric_cols if col in frame.columns]
         for col in available_numeric:
             frame[col] = pd.to_numeric(frame[col], errors="coerce")
@@ -295,6 +301,13 @@ def generate_ablation_figures(summary_csv: str | Path, output_dir: str | Path) -
         stds = frame.groupby(group_cols, sort=False)[available_numeric].std().fillna(0.0).reset_index()
         stds = stds.rename(columns={col: f"{col}_std" for col in available_numeric})
         df = means.merge(stds, on=group_cols, validate="one_to_one")
+        aggregate_path = path.with_name("ablation_aggregate.csv")
+        if aggregate_path.exists():
+            aggregate = pd.read_csv(aggregate_path)
+            if "rule_stability" in aggregate.columns:
+                stability = aggregate[["variant", "rule_stability"]].drop_duplicates("variant")
+                df = df.merge(stability, on="variant", how="left", validate="one_to_one")
+                df["rule_stability_std"] = 0.0
         variant_order = {
             "random_init": 0,
             "static_guideline": 1,
@@ -346,6 +359,39 @@ def generate_ablation_figures(summary_csv: str | Path, output_dir: str | Path) -
             ax.legend()
             fig.tight_layout()
             outputs.extend(_save(fig, output_dir, f"ablation_predictive_performance{suffix}"))
+            plt.close(fig)
+
+        calibration = _finite_frame(df, calibration_cols)
+        if not calibration.empty:
+            y = np.arange(len(calibration))
+            width = 0.36
+            fig, ax = plt.subplots(figsize=(10, max(4.8, 0.7 * len(calibration) + 1.5)))
+            ax.barh(
+                y - width / 2,
+                calibration["test_brier"],
+                width,
+                xerr=calibration["test_brier_std"],
+                label="Brier",
+                color=PALETTE[2],
+                capsize=3,
+            )
+            ax.barh(
+                y + width / 2,
+                calibration["test_ece"],
+                width,
+                xerr=calibration["test_ece_std"],
+                label="ECE",
+                color=PALETTE[3],
+                capsize=3,
+            )
+            ax.set_yticks(y)
+            ax.set_yticklabels(calibration["label"])
+            ax.invert_yaxis()
+            ax.set_xlabel("Calibration error (lower is better)")
+            ax.set_title(f"Ablation Study: Calibration{title_suffix}")
+            ax.legend()
+            fig.tight_layout()
+            outputs.extend(_save(fig, output_dir, f"ablation_calibration{suffix}"))
             plt.close(fig)
 
         available = [(col, label) for col, label in quality_cols if col in df.columns]

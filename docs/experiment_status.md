@@ -1,39 +1,57 @@
-# 實驗完成度
+# 實驗完成度與下一步
 
-更新日期：2026-07-04
+更新日期：2026-07-05
+
+## Outcome Priority
+
+- Primary：未來 6 小時 SOFA increase >= 2。
+- Secondary：未來 12/24 小時 SOFA increase >= 2。
+- 12/24 h 不阻擋 primary manuscript；詳見 [analysis_plan.md](analysis_plan.md)。
 
 ## 已完成
 
 | 實驗 | 正式輸出 |
 |---|---|
-| Leakage-free MIMIC hourly SOFA 與 6/12/24 h labels | `sofa_scores_hourly.csv` |
+| Leakage-free 6/12/24 h labels；6 h 為 primary | `sofa_scores_hourly.csv` |
 | MIMIC v3 hourly、missingness、time-since features | `model_hourly_features_v3.csv` |
 | Patient-level split 與 equal-sample protocol | `patient_split.csv`, `comparison_protocol.json` |
 | 6 h baseline benchmark 與共同 predictions | `outputs/fair_comparison_6h_equal_sample/` |
-| Independent test、500 次 subject bootstrap、paired tests、DCA、lead time、calibration | `outputs/advanced_evaluation_6h_equal_sample/` |
-| Explicit temporal features 與 4/6/12/24 h observation sensitivity | `outputs/explicit_temporal_observation_sensitivity_6h/` |
-| Explicit-temporal FNN 專屬 Optuna，30 trials、8 epochs | `outputs/explicit_temporal_fnn_tuning_6h/` |
-| eICU harmonization、future SOFA labels 與 frozen-checkpoint external validation | `outputs/eicu_external_validation/` |
+| 6 h independent test、subject bootstrap、paired tests、DCA、lead time、calibration | `outputs/advanced_evaluation_6h_equal_sample/` |
+| 4/6/12/24 h observation-window sensitivity，outcome 固定 6 h | `outputs/explicit_temporal_observation_sensitivity_6h/` |
+| Explicit-temporal Optuna，30 trials、8 epochs | `outputs/explicit_temporal_fnn_tuning_6h/` |
+| Explicit-temporal full-cohort 6 h training，best epoch 15 | `outputs/explicit_temporal_fnn_formal_6h/seed_42/` |
+| Frozen final-model test evaluation、validation-only calibration、1,000 次 subject bootstrap | `outputs/final_test_evaluation_6h/` |
+| 正式 FNN 消融；4 variants、3 seeds、完整 test | `outputs/fnn_ablation_6h_equal_sample/` |
+| Frozen-model temporal fuzzy rule extraction；24 條 supported rules | `outputs/temporal_rule_extraction_6h/` |
+| eICU harmonization 與 frozen-checkpoint external validation | `outputs/eicu_external_validation/` |
 
-## 下一步
+## Primary 6 h 尚缺
 
-1. **Full-cohort 6 h training。** 執行 `outputs/explicit_temporal_fnn_tuning_6h/train_with_best_params.ps1`，使用 early stopping 選定新版 checkpoint，之後才評估一次 test。
-2. **新版統一比較。** 匯出 explicit FNN validation/test predictions，加入現有 LR、EBM、GRU 等模型，重跑 patient-clustered paired comparison。
-3. **新版正式消融。** 比較 random initialization、guideline static、explicit temporal without consistency、full explicit temporal，完整 cohort、3–5 seeds。
-4. **Prediction horizons。** 將新版模型延伸至未來 12/24 h outcome；目前新版 sensitivity 只預測未來 6 h。
-5. **Rule quality。** 補新版 IF-THEN table、complexity、stability、concordance、drift、activated rules、membership plots 與 TP/FP/FN timelines。
-6. **最終 external validation。** 使用定案後的 full-cohort checkpoint 原封不動重跑 eICU，並補 comparator transport、site heterogeneity、domain shift 與 SOFA mapping sensitivity。
+1. **新版 paired comparison。** Equal-sample explicit FNN checkpoints 與 predictions 已由正式消融產生；需整合 LR、EBM、XGBoost、GRU predictions，重跑至少 500 次 subject-clustered bootstrap、fixed specificity、DCA、lead time、risk strata 與 calibration。
+2. **Scale sensitivity。** 評估 explicit scale 1.0、1.5、2.0、2.5，並檢查 rule scale/double counting。
+3. **Rule-quality 剩餘項目。** IF-THEN table、stability、concordance 與 normalized drift 已完成；尚缺 membership plots、rule complexity 總結與 TP/FP/FN timelines。
+4. **最終 eICU validation。** 使用定案後 checkpoint 原封不動重跑，並補 comparator transport 與 site/domain-shift analyses。
 
-## 論文報告待補
+## Secondary Analysis
+
+- 12 h outcome experiment。
+- 24 h outcome experiment。
+- 兩者可在 primary 6 h manuscript 完成後補入 supplement，不阻擋目前工作。
+
+## 論文仍需補
 
 - MIMIC/eICU cohort flow diagram。
 - Development、internal test、external test Table 1 與 missingness table。
+- Age、sex、ethnicity、ICU type subgroup performance。
+- Hospital-clustered external sensitivity analysis。
 - TRIPOD+AI 與 PROBAST+AI checklist。
-- 主要/次要 outcome 與多重比較策略。
+- 多重比較與模型選擇規則。
 
-## 重要限制
+## 重要原則
 
-- Tuning AUROC 0.6515 是 validation 結果，不是 test performance。
-- 最佳 `explicit_temporal_scale=1.9896` 接近搜尋上界 2.0；完整訓練後需檢查 calibration、rule drift 與 double counting，並補局部 sensitivity analysis。
-- 目前 eICU AUROC 0.6034 使用較早但完全 frozen 的 explicit checkpoint；它是有效 external validation，但不是新 full-cohort 模型的最終 external result。
-- Hourly windows 並不獨立；信賴區間與模型差異必須以 `subject_id` 為 cluster，site sensitivity 可再以 hospital 為 cluster。
+- Tuning AUROC 0.6515 是 validation performance；full-cohort test AUROC 為 0.6559。
+- Final test 已鎖定 checkpoint SHA-256 `158427a5...9125688`；正式 calibrated Brier 為 0.0521、ECE 為 0.0012。
+- 消融顯示 temporal design 是主要效能來源（paired AUROC +0.0510）；consistency loss 未改善 AUROC，僅 Rule Stability 呈現方向性提升。
+- Full-cohort FNN 與 equal-sample baselines 不可作 primary 公平效能宣稱。
+- Hourly windows 彼此相關；CI 與模型差異必須以 `subject_id` 為 bootstrap cluster。
+- eICU 不可用於 hyperparameter selection 或 primary recalibration。

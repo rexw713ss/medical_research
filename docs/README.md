@@ -4,7 +4,11 @@
 
 - [專案入口](../README.md)
 - [實驗完成度與下一步](experiment_status.md)
-- [目前 full-cohort training](full_cohort_training_6h.md)
+- [Primary/secondary analysis plan](analysis_plan.md)
+- [Full-cohort 6 h result](full_cohort_training_6h.md)
+- [Frozen final-model 6 h test report](../outputs/final_test_evaluation_6h/final_test_report.md)
+- [正式 6 h FNN 消融實驗](formal_ablation_study_6h.md)
+- [實際模型萃取的 temporal fuzzy rules](extracted_temporal_rules_6h.md)
 - [正式輸出索引](../outputs/README.md)
 
 ## 方法

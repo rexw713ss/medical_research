@@ -1,14 +1,12 @@
-# Explicit-Temporal FNN Full-Cohort Training
+# Explicit-Temporal FNN Full-Cohort 6 h Training
 
-更新日期：2026-07-04
+更新日期：2026-07-05
 
 ## 狀態
 
-**進行中。** 正式輸出位於 `outputs/explicit_temporal_fnn_formal_6h/seed_42/`。
+**完成。** Primary outcome 為未來 6 小時 SOFA increase >= 2。最佳 checkpoint 由 validation AUROC 選定於 epoch 15；訓練在 epoch 20 依 patience 5 early stopping。
 
-2026-07-04 檢查時已完成 epoch 12；當時 validation AUROC 為 0.6614、AUPRC 為 0.1312。這些是訓練中的 validation 指標，不是最終 test performance。Early stopping 最多訓練 20 epochs，minimum 10 epochs、patience 5、minimum AUROC delta 0.0001。
-
-## Cohort Audit
+## Cohort
 
 | Split | Windows | Positive | Prevalence | SHA-256 |
 |---|---:|---:|---:|---|
@@ -16,46 +14,34 @@
 | Validation | 819,573 | 47,638 | 5.813% | `87ba42c5c12be7b6b1113d8b347fb31711f1b2ad2100d03564e35f287ec1cd9a` |
 | Test | 830,839 | 47,292 | 5.692% | `5a3afc9059e6a5dbf7f7e3da3f0297c07889e7dec19a65fe77122c2e157168db` |
 
-Patient split 與 cohort fingerprint 已通過 `comparison_protocol.json` 稽核。
+## Frozen Final Test Results
 
-## 完成判定
+| Metric | Estimate | Patient-clustered 95% CI |
+|---|---:|---:|
+| AUROC | 0.6559 | 0.6492–0.6628 |
+| AUPRC | 0.1309 | 0.1250–0.1375 |
+| Brier, validation-only calibrated | 0.0521 | 0.0507–0.0534 |
+| ECE, validation-only calibrated | 0.0012 | 0.0006–0.0026 |
+| Calibration intercept | -0.020 | - |
+| Calibration slope | 0.997 | - |
 
-訓練程序結束後必須同時存在：
+在 90% specificity 下 sensitivity 為 0.2667、PPV 0.1394、NPV 0.9532；在 95% specificity 下 sensitivity 為 0.1755、PPV 0.1767、NPV 0.9503。完整信賴區間見 [final test report](../outputs/final_test_evaluation_6h/final_test_report.md)。
 
-- `best_model.pt`
-- `last_model.pt`
-- `training_summary.json`
-- `test_metrics.csv`
-- `metrics.csv`
-- `figures/training_history.png` 與 PDF
+Raw probabilities 來自 class-weighted BCE，raw Brier 為 0.1962、raw ECE 為 0.3700，不可直接當床邊絕對風險。正式結果採 validation-only Platt calibration，參數原封不動套用 test。
 
-在上述檔案齊全前，不應將 full-cohort training 標示為完成。
+## Artifacts
 
-## 完成後立即執行
+- `outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt`
+- `outputs/explicit_temporal_fnn_formal_6h/seed_42/training_summary.json`
+- `outputs/explicit_temporal_fnn_formal_6h/seed_42/test_metrics.csv`
+- `outputs/explicit_temporal_fnn_formal_6h/seed_42/metrics.csv`
+- `outputs/explicit_temporal_fnn_formal_6h/seed_42/figures/`
+- `outputs/final_test_evaluation_6h/FINAL_TEST_LOCK.json`
+- `outputs/final_test_evaluation_6h/final_test_report.md`
+- `outputs/final_test_evaluation_6h/advanced/`
+- `outputs/temporal_rule_extraction_6h/extracted_temporal_rules.csv`
+- `docs/extracted_temporal_rules_6h.md`
 
-匯出固定 validation/test windows 的 prediction-level 檔案，供 calibration 與 patient-clustered evaluation 使用：
+## 解讀
 
-```powershell
-.\env\Scripts\python.exe model_evaluation_report.py --sources fnn --fnn-run-dirs outputs\explicit_temporal_fnn_formal_6h\seed_42 --comparison-mode full --horizons 6 --save-predictions --prediction-output-dir outputs\explicit_temporal_fnn_formal_6h\seed_42\predictions --output-dir outputs\explicit_temporal_fnn_formal_6h\seed_42\evaluation --device cuda
-```
-
-這次 full-cohort 模型屬於 sample-size/deployment analysis，不能直接與只用 200,000 training windows 的 baseline 當作主要公平比較。
-
-## 主要公平比較仍需補跑
-
-使用同一組最佳參數，在固定 200,000/50,000 equal-sample cohort 重訓 explicit model：
-
-```powershell
-.\env\Scripts\python.exe train_fnn.py --comparison-mode equal_sample --best-params-json outputs\explicit_temporal_fnn_tuning_6h\best_params.json --explicit-temporal-features --epochs 20 --early-stopping-patience 5 --early-stopping-min-epochs 10 --output-dir outputs\explicit_temporal_fnn_equal_sample_6h\seed_42 --device cuda
-```
-
-完成後需匯出 predictions，加入 `outputs/fair_comparison_6h_equal_sample/`，再重跑 500 次 subject-clustered bootstrap 與 paired model comparison。
-
-## 必查項目
-
-- 最佳 epoch 是否由 validation AUROC 選出。
-- Test 是否只在 checkpoint 固定後評估。
-- Raw 與 validation-only calibrated Brier、ECE、intercept、slope。
-- Sensitivity at 90%/95% specificity。
-- `explicit_temporal_scale=1.9896` 的局部 sensitivity。
-- 高 rule scale 與 explicit scale 是否造成 double counting、rule drift 或 calibration 惡化。
+Checkpoint 由 validation AUROC 選定，SHA-256 為 `158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688`。一次性 final test evaluation 已完成並鎖定。此 full-cohort model 是 6 h sample-size/deployment sensitivity；primary model comparison 仍需在固定 200,000/50,000 equal-sample cohort 重訓 explicit FNN，再與 baseline 做 paired bootstrap。

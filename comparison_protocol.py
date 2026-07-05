@@ -26,6 +26,8 @@ from project_config import (
     COMPARISON_PROTOCOL_JSON,
     EQUAL_SAMPLE_WINDOWS_CSV,
     PATIENT_SPLIT_CSV,
+    PRIMARY_OUTCOME_COLUMN,
+    SECONDARY_OUTCOME_COLUMNS,
     SOFA_HOURLY_CSV,
 )
 
@@ -378,6 +380,10 @@ def main() -> None:
         "sequence_length_hours": args.seq_length,
         "predictors": FEATURE_ORDER,
         "outcomes": target_cols,
+        "analysis_outcome_roles": {
+            "primary": PRIMARY_OUTCOME_COLUMN,
+            "secondary": list(SECONDARY_OUTCOME_COLUMNS),
+        },
         "modes": {
             "full": "all eligible train/validation/test windows",
             "equal_sample": {

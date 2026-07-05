@@ -18,6 +18,7 @@ from typing import Any
 from comparison_protocol import load_protocol
 from project_config import (
     COMPARISON_PROTOCOL_JSON,
+    DEFAULT_PREDICTION_HORIZONS,
     EQUAL_SAMPLE_WINDOWS_CSV,
     PATIENT_SPLIT_CSV,
 )
@@ -33,7 +34,11 @@ def parse_list(raw: str) -> list[str]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run protocol-controlled fair model comparison.")
     parser.add_argument("--mode", choices=["full", "equal_sample"], default="equal_sample")
-    parser.add_argument("--horizons", default="6,12,24")
+    parser.add_argument(
+        "--horizons",
+        default=",".join(map(str, DEFAULT_PREDICTION_HORIZONS)),
+        help="Primary defaults to 6; explicitly pass 12,24 for secondary analyses.",
+    )
     parser.add_argument(
         "--families",
         default=",".join(DEFAULT_FAMILIES),

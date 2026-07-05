@@ -27,6 +27,13 @@
     "label_sofa_increase_ge2_12h",
     "label_sofa_increase_ge2_24h"
   ],
+  "analysis_outcome_roles": {
+    "primary": "label_sofa_increase_ge2_6h",
+    "secondary": [
+      "label_sofa_increase_ge2_12h",
+      "label_sofa_increase_ge2_24h"
+    ]
+  },
   "modes": {
     "full": "all eligible train/validation/test windows",
     "equal_sample": {

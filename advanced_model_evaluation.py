@@ -180,12 +180,18 @@ def operating_metrics(y_true: np.ndarray, y_prob: np.ndarray, threshold: float) 
     fn = float(np.sum(~pred & positive))
     tn = float(np.sum(~pred & negative))
     fp = float(np.sum(pred & negative))
+    sensitivity = tp / (tp + fn) if tp + fn else math.nan
+    specificity = tn / (tn + fp) if tn + fp else math.nan
+    ppv = tp / (tp + fp) if tp + fp else math.nan
+    npv = tn / (tn + fn) if tn + fn else math.nan
+    f1 = 2 * ppv * sensitivity / (ppv + sensitivity) if ppv + sensitivity else math.nan
     return {
         "threshold": threshold,
-        "sensitivity": tp / (tp + fn) if tp + fn else math.nan,
-        "specificity": tn / (tn + fp) if tn + fp else math.nan,
-        "ppv": tp / (tp + fp) if tp + fp else math.nan,
-        "npv": tn / (tn + fn) if tn + fn else math.nan,
+        "sensitivity": sensitivity,
+        "specificity": specificity,
+        "ppv": ppv,
+        "npv": npv,
+        "f1": f1,
     }
 
 
@@ -237,12 +243,12 @@ def weighted_auprc(y: np.ndarray, score: np.ndarray, weight: np.ndarray) -> floa
     return float(np.sum(precision * pos_weight) / total_pos)
 
 
-def weighted_operating_metric(
+def weighted_operating_metrics(
     y: np.ndarray,
     score: np.ndarray,
     weight: np.ndarray,
     threshold: float,
-) -> tuple[float, float]:
+) -> dict[str, float]:
     pred = score >= threshold
     tp = np.sum(weight * pred * (y == 1))
     fn = np.sum(weight * (~pred) * (y == 1))
@@ -250,7 +256,39 @@ def weighted_operating_metric(
     fp = np.sum(weight * pred * (y == 0))
     sensitivity = tp / (tp + fn) if tp + fn else math.nan
     specificity = tn / (tn + fp) if tn + fp else math.nan
-    return float(sensitivity), float(specificity)
+    ppv = tp / (tp + fp) if tp + fp else math.nan
+    npv = tn / (tn + fn) if tn + fn else math.nan
+    f1 = 2 * ppv * sensitivity / (ppv + sensitivity) if ppv + sensitivity else math.nan
+    return {
+        "sensitivity": float(sensitivity),
+        "specificity": float(specificity),
+        "ppv": float(ppv),
+        "npv": float(npv),
+        "f1": float(f1),
+    }
+
+
+def weighted_ece(
+    y: np.ndarray,
+    score: np.ndarray,
+    weight: np.ndarray,
+    n_bins: int = 10,
+) -> float:
+    edges = np.linspace(0.0, 1.0, n_bins + 1)
+    bin_ids = np.minimum(np.digitize(score, edges[1:-1], right=False), n_bins - 1)
+    total_weight = weight.sum()
+    if total_weight <= 0:
+        return math.nan
+    ece = 0.0
+    for bin_idx in range(n_bins):
+        mask = bin_ids == bin_idx
+        bin_weight = weight[mask].sum()
+        if bin_weight <= 0:
+            continue
+        mean_probability = np.sum(weight[mask] * score[mask]) / bin_weight
+        event_rate = np.sum(weight[mask] * y[mask]) / bin_weight
+        ece += (bin_weight / total_weight) * abs(mean_probability - event_rate)
+    return float(ece)
 
 
 def patient_bootstrap(
@@ -273,14 +311,13 @@ def patient_bootstrap(
             "auroc": weighted_auc(y, score, weight),
             "auprc": weighted_auprc(y, score, weight),
             "brier": float(np.sum(weight * (score - y) ** 2) / total_weight),
+            "ece": weighted_ece(y, score, weight),
         }
         for specificity, threshold in thresholds.items():
-            sensitivity_value, specificity_value = weighted_operating_metric(
-                y, score, weight, threshold
-            )
+            operating = weighted_operating_metrics(y, score, weight, threshold)
             tag = int(round(specificity * 100))
-            row[f"sensitivity_at_spec_{tag}"] = sensitivity_value
-            row[f"specificity_at_spec_{tag}"] = specificity_value
+            for metric, value in operating.items():
+                row[f"{metric}_at_spec_{tag}"] = value
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -623,6 +660,8 @@ def main() -> None:
         }
         raw_point = binary_metrics(y_test, p_test_raw)
         point = binary_metrics(y_test, p_test)
+        raw_point["ece"] = weighted_ece(y_test, p_test_raw, np.ones_like(p_test_raw))
+        point["ece"] = weighted_ece(y_test, p_test, np.ones_like(p_test))
         intercept, slope = calibration_intercept_slope(y_test, p_test)
         raw_intercept, raw_slope = calibration_intercept_slope(y_test, p_test_raw)
         row = {
@@ -632,6 +671,7 @@ def main() -> None:
             "windows": int(len(test)),
             **point,
             "raw_brier": raw_point["brier"],
+            "raw_ece": raw_point["ece"],
             "raw_log_loss": raw_point["log_loss"],
             "raw_calibration_intercept": raw_intercept,
             "raw_calibration_slope": raw_slope,
@@ -654,13 +694,19 @@ def main() -> None:
                     }
                 )
             row[f"threshold_spec_{tag}"] = threshold
-            row[f"sensitivity_at_spec_{tag}"] = metrics["sensitivity"]
-            row[f"observed_specificity_at_spec_{tag}"] = metrics["specificity"]
+            for metric in ("sensitivity", "specificity", "ppv", "npv", "f1"):
+                prefix = "observed_specificity" if metric == "specificity" else metric
+                row[f"{prefix}_at_spec_{tag}"] = metrics[metric]
 
         bootstrap = patient_bootstrap(test, thresholds, args.bootstrap_reps, args.seed)
         bootstrap.insert(0, "model", model)
         bootstrap_tables[model] = bootstrap
-        for metric in ["auroc", "auprc", "brier", *[f"sensitivity_at_spec_{int(round(s*100))}" for s in specificities]]:
+        operating_ci_metrics = [
+            f"{metric}_at_spec_{int(round(specificity * 100))}"
+            for specificity in specificities
+            for metric in ("sensitivity", "specificity", "ppv", "npv", "f1")
+        ]
+        for metric in ["auroc", "auprc", "brier", "ece", *operating_ci_metrics]:
             low, high = percentile_ci(bootstrap[metric])
             row[f"{metric}_ci95_low"] = low
             row[f"{metric}_ci95_high"] = high

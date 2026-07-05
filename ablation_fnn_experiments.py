@@ -22,6 +22,7 @@ import gc
 import json
 import math
 import random
+from itertools import combinations
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -36,11 +37,14 @@ from torch.utils.data import DataLoader, Dataset, Subset
 
 from anfis_model import (
     FEATURE_ORDER,
+    ExpertGuidedStaticFNN,
     NeuroSymbolicLoss,
     TemporalAttentionFNN,
     clinical_rule_priors,
     expert_feature_config,
+    explicit_temporal_input_order,
 )
+from advanced_model_evaluation import apply_platt_calibration, calibration_intercept_slope
 from comparison_protocol import (
     cohort_record,
     load_protocol,
@@ -60,9 +64,11 @@ from project_config import (
 )
 from sofa_label_utils import horizon_from_target_col
 from train_fnn import (
+    classification_metrics,
     choose_device,
     load_training_frame,
     prepare_arrays,
+    prepare_explicit_temporal_arrays,
     run_epoch,
 )
 
@@ -89,6 +95,8 @@ SUMMARY_METRICS = [
     "test_specificity",
     "test_f1",
     "rule_drift_loss",
+    "rule_drift_normalized",
+    "rule_concordance",
     "active_rule_fraction_gt_0_1",
     "attention_entropy",
     "attention_last_6h_mass",
@@ -141,6 +149,7 @@ class AblationWindowDataset(Dataset):
         self.input_seq_length = input_seq_length
         self.min_history_length = min_history_length
         self.stay_ids = stay_ids
+        self.split_values = split_values
         self.time_values = time_values
         self.window_starts, self.target_indices = self._build_windows(
             stay_ids=stay_ids,
@@ -372,7 +381,100 @@ def mean_std_ci(values: pd.Series) -> tuple[int, float, float, float, float]:
     return n, mean, std, mean - half_width, mean + half_width
 
 
+def calculate_rule_stability(output_dir: Path, top_k: int = 10) -> dict[str, dict[str, float]]:
+    rows = []
+    summaries: dict[str, dict[str, float]] = {}
+    for variant in VARIANT_ORDER:
+        inventories = {}
+        for path in sorted(output_dir.glob(f"seed_*/{variant}/rule_inventory.csv")):
+            seed = int(path.parents[1].name.removeprefix("seed_"))
+            frame = pd.read_csv(path).sort_values("importance", ascending=False)
+            inventories[seed] = set(frame.head(top_k)["rule_id"].astype(str))
+        similarities = []
+        for (seed_a, rules_a), (seed_b, rules_b) in combinations(inventories.items(), 2):
+            union = rules_a | rules_b
+            jaccard = len(rules_a & rules_b) / len(union) if union else math.nan
+            rows.append(
+                {
+                    "variant": variant,
+                    "seed_a": seed_a,
+                    "seed_b": seed_b,
+                    "top_k": top_k,
+                    "intersection": len(rules_a & rules_b),
+                    "union": len(union),
+                    "jaccard": jaccard,
+                }
+            )
+            similarities.append(jaccard)
+        finite = np.asarray(similarities, dtype=float)
+        finite = finite[np.isfinite(finite)]
+        summaries[variant] = {
+            "mean": float(finite.mean()) if finite.size else math.nan,
+            "std": float(finite.std(ddof=1)) if finite.size > 1 else 0.0 if finite.size else math.nan,
+            "pairs": int(finite.size),
+        }
+    pd.DataFrame(rows).to_csv(output_dir / "rule_stability_pairwise.csv", index=False)
+    return summaries
+
+
+def write_publication_table(aggregate: pd.DataFrame, output_dir: Path) -> None:
+    columns = {
+        "AUROC": "test_auroc_mean",
+        "AUPRC": "test_auprc_mean",
+        "Brier": "test_brier_mean",
+        "ECE": "test_ece_mean",
+        "Rule Concordance": "rule_concordance_mean",
+        "Rule Stability": "rule_stability",
+        "Rule Drift": "rule_drift_normalized_mean",
+    }
+    rows = []
+    for _, source in aggregate.iterrows():
+        row = {"Model": source["display_name"]}
+        for label, source_col in columns.items():
+            row[label] = source.get(source_col, math.nan)
+        row["Seeds"] = source.get("seeds", "")
+        rows.append(row)
+    table = pd.DataFrame(rows)
+    table.to_csv(output_dir / "ablation_publication_table.csv", index=False)
+
+    def formatted(source: pd.Series, metric: str, stability: bool = False) -> str:
+        value = float(source.get(metric, math.nan))
+        if not np.isfinite(value):
+            return "NA"
+        if stability:
+            return f"{value:.3f}"
+        std = float(source.get(metric.replace("_mean", "_std"), math.nan))
+        return f"{value:.3f} +/- {std:.3f}" if np.isfinite(std) else f"{value:.3f}"
+
+    lines = [
+        "# Formal 6-hour FNN Ablation Study",
+        "",
+        "Values are mean +/- SD across random seeds. Brier and ECE use validation-only Platt calibration.",
+        "Rule Stability is mean pairwise Top-10 Jaccard similarity.",
+        "",
+        "| Model | AUROC | AUPRC | Brier | ECE | Rule Concordance | Rule Stability | Rule Drift |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for _, row in aggregate.iterrows():
+        lines.append(
+            "| " + " | ".join(
+                [
+                    str(row["display_name"]),
+                    formatted(row, "test_auroc_mean"),
+                    formatted(row, "test_auprc_mean"),
+                    formatted(row, "test_brier_mean"),
+                    formatted(row, "test_ece_mean"),
+                    formatted(row, "rule_concordance_mean"),
+                    formatted(row, "rule_stability", stability=True),
+                    formatted(row, "rule_drift_normalized_mean"),
+                ]
+            ) + " |"
+        )
+    (output_dir / "ablation_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def aggregate_ablation_results(summary: pd.DataFrame, output_dir: Path) -> tuple[Path, Path]:
+    stability = calculate_rule_stability(output_dir)
     aggregate_rows = []
     group_cols = [
         "target_col",
@@ -387,6 +489,9 @@ def aggregate_ablation_results(summary: pd.DataFrame, output_dir: Path) -> tuple
         row = dict(zip(group_cols, keys))
         row["n_seeds"] = int(group["seed"].nunique())
         row["seeds"] = ",".join(str(value) for value in sorted(group["seed"].astype(int).unique()))
+        row["rule_stability"] = stability.get(str(row["variant"]), {}).get("mean", math.nan)
+        row["rule_stability_std"] = stability.get(str(row["variant"]), {}).get("std", math.nan)
+        row["rule_stability_pairs"] = stability.get(str(row["variant"]), {}).get("pairs", 0)
         for metric in SUMMARY_METRICS:
             if metric not in group.columns:
                 continue
@@ -398,7 +503,14 @@ def aggregate_ablation_results(summary: pd.DataFrame, output_dir: Path) -> tuple
         aggregate_rows.append(row)
 
     aggregate_path = output_dir / "ablation_aggregate.csv"
-    pd.DataFrame(aggregate_rows).to_csv(aggregate_path, index=False)
+    aggregate = pd.DataFrame(aggregate_rows)
+    variant_rank = {name: index for index, name in enumerate(VARIANT_ORDER)}
+    aggregate["_variant_rank"] = aggregate["variant"].map(variant_rank)
+    aggregate = aggregate.sort_values(["horizon_hours", "_variant_rank"]).drop(
+        columns="_variant_rank"
+    )
+    aggregate.to_csv(aggregate_path, index=False)
+    write_publication_table(aggregate, output_dir)
 
     # 配對差值能分別對應三個研究問題，避免 full-vs-static 同時混入兩種設計差異。
     contrasts = [
@@ -432,7 +544,14 @@ def aggregate_ablation_results(summary: pd.DataFrame, output_dir: Path) -> tuple
                     str(value) for value in sorted(paired["seed"].astype(int).unique())
                 ),
             }
-            for metric in ["test_auroc", "test_auprc", "test_brier", "test_ece", "rule_drift_loss"]:
+            for metric in [
+                "test_auroc",
+                "test_auprc",
+                "test_brier",
+                "test_ece",
+                "rule_concordance",
+                "rule_drift_normalized",
+            ]:
                 enabled_col = f"{metric}_enabled"
                 disabled_col = f"{metric}_disabled"
                 if enabled_col not in paired or disabled_col not in paired:
@@ -530,10 +649,23 @@ def make_random_feature_config(
 
         n_terms = len(expert_terms)
         span = max(float(high - low), 1e-3)
-        centers = np.sort(rng.uniform(low, high, size=n_terms))
-        sigmas = rng.uniform(span / (n_terms * 3.0), span / max(n_terms, 1), size=n_terms)
+        quantiles = np.linspace(0.05, 0.95, n_terms)
+        if values.size:
+            coverage_centers = np.quantile(values, quantiles)
+        else:
+            coverage_centers = np.linspace(low, high, n_terms)
+        spacing = span / max(n_terms - 1, 1)
+        coverage_centers = np.clip(
+            coverage_centers + rng.normal(0.0, spacing * 0.15, size=n_terms),
+            low,
+            high,
+        )
+        # 打散 term 與 center 的對應，但保留數值空間覆蓋，避免無梯度的壞初始化。
+        centers = coverage_centers[rng.permutation(n_terms)]
+        sigmas = rng.uniform(spacing * 0.75, spacing * 1.50, size=n_terms)
         sigmas = np.clip(sigmas, 1e-3, 80.0)
-        weights = rng.uniform(0.0, 4.0, size=n_terms)
+        # 13 個 feature score 會相加；近零初始化可避免 sigmoid 一開始即飽和。
+        weights = rng.uniform(0.0, 0.5, size=n_terms)
 
         configs[feature] = [
             {
@@ -567,7 +699,7 @@ def make_random_rule_configs(
             {
                 "name": f"random_rule_{rule_idx + 1}",
                 "antecedents": antecedents,
-                "weight": float(rng.uniform(0.0, 5.0)),
+                "weight": float(rng.uniform(0.0, 1.0)),
             }
         )
     return rules
@@ -579,6 +711,11 @@ def build_variants(
     random_rule_configs: list[dict],
 ) -> dict[str, VariantSpec]:
     static_min_history = args.static_min_history_hours
+    random_lambda_drift = (
+        args.lambda_drift
+        if args.random_lambda_drift is None
+        else args.random_lambda_drift
+    )
     return {
         "random_init": VariantSpec(
             name="random_init",
@@ -592,7 +729,8 @@ def build_variants(
             temporal_design=True,
             clinical_consistency=True,
             lambda_cons=args.lambda_cons,
-            lambda_drift=args.random_lambda_drift,
+            lambda_drift=random_lambda_drift,
+            explicit_temporal_features=True,
         ),
         "static_guideline": VariantSpec(
             name="static_guideline",
@@ -621,6 +759,7 @@ def build_variants(
             clinical_consistency=False,
             lambda_cons=0.0,
             lambda_drift=args.lambda_drift,
+            explicit_temporal_features=True,
         ),
         "full": VariantSpec(
             name="full",
@@ -635,6 +774,7 @@ def build_variants(
             clinical_consistency=True,
             lambda_cons=args.lambda_cons,
             lambda_drift=args.lambda_drift,
+            explicit_temporal_features=True,
         ),
     }
 
@@ -667,8 +807,13 @@ def build_datasets_for_variant(
     val_window_ids: np.ndarray | None,
     args: argparse.Namespace,
 ) -> tuple[Dataset, Dataset, Dataset]:
+    variant_features = (
+        features
+        if spec.explicit_temporal_features
+        else features[:, : len(FEATURE_ORDER)]
+    )
     train_dataset = AblationWindowDataset(
-        features=features,
+        features=variant_features,
         labels=labels,
         stay_ids=stay_ids,
         split_values=split_values,
@@ -680,7 +825,7 @@ def build_datasets_for_variant(
         require_all_window_ids=not args.allow_incomplete_cohort,
     )
     val_dataset = AblationWindowDataset(
-        features=features,
+        features=variant_features,
         labels=labels,
         stay_ids=stay_ids,
         split_values=split_values,
@@ -692,7 +837,7 @@ def build_datasets_for_variant(
         require_all_window_ids=not args.allow_incomplete_cohort,
     )
     test_dataset = AblationWindowDataset(
-        features=features,
+        features=variant_features,
         labels=labels,
         stay_ids=stay_ids,
         split_values=split_values,
@@ -739,14 +884,190 @@ def finite_or_zero(value: float) -> float:
     return 0.0 if value is None or math.isnan(float(value)) else float(value)
 
 
+def evaluate_dataset_with_predictions(
+    model: TemporalAttentionFNN,
+    dataset: Dataset,
+    criterion: NeuroSymbolicLoss,
+    device: torch.device,
+    batch_size: int,
+    num_workers: int,
+    max_batches: int | None = None,
+) -> tuple[dict[str, float], dict[str, float], np.ndarray, np.ndarray]:
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=device.type == "cuda",
+    )
+    loss_sums = {
+        "total": 0.0,
+        "prediction": 0.0,
+        "clinical_consistency": 0.0,
+        "rule_sparsity": 0.0,
+        "rule_drift": 0.0,
+        "nonnegative_weights": 0.0,
+    }
+    probabilities: list[np.ndarray] = []
+    targets: list[np.ndarray] = []
+    n_samples = 0
+    model.eval()
+    criterion.eval()
+    with torch.no_grad():
+        for batch_idx, (batch_x, batch_y) in enumerate(loader, start=1):
+            if max_batches is not None and batch_idx > max_batches:
+                break
+            batch_x = batch_x.to(device, non_blocking=True)
+            batch_y = batch_y.to(device, non_blocking=True)
+            output = model(batch_x)
+            losses = criterion(output, batch_y, model)
+            n_batch = int(batch_y.shape[0])
+            n_samples += n_batch
+            for key, value in losses.items():
+                loss_sums[key] += float(value.detach().item()) * n_batch
+            probabilities.append(output.probabilities.detach().cpu().numpy())
+            targets.append(batch_y.detach().cpu().numpy())
+
+    if not probabilities:
+        raise ValueError("Evaluation dataset 沒有可用樣本。")
+    y_true = np.concatenate(targets).astype(np.float32, copy=False)
+    y_prob = np.concatenate(probabilities).astype(np.float32, copy=False)
+    mean_losses = {key: value / n_samples for key, value in loss_sums.items()}
+    return mean_losses, classification_metrics(y_true, y_prob), y_true, y_prob
+
+
+def dataset_prediction_metadata(dataset: Dataset) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if isinstance(dataset, Subset):
+        base = dataset.dataset
+        selected = np.asarray(dataset.indices, dtype=np.int64)
+        target_indices = base.target_indices[selected]
+    else:
+        base = dataset
+        target_indices = base.target_indices
+    return (
+        np.asarray(base.split_values[target_indices]),
+        np.asarray(base.stay_ids[target_indices]),
+        np.asarray(base.time_values[target_indices]),
+    )
+
+
+def save_predictions(
+    path: Path,
+    dataset: Dataset,
+    y_true: np.ndarray,
+    y_prob_raw: np.ndarray,
+    y_prob_calibrated: np.ndarray,
+) -> None:
+    subject_id, stay_id, time_value = dataset_prediction_metadata(dataset)
+    if len(y_true) > len(subject_id):
+        raise ValueError("Prediction metadata 少於預測列數。")
+    subject_id = subject_id[: len(y_true)]
+    stay_id = stay_id[: len(y_true)]
+    time_value = time_value[: len(y_true)]
+    pd.DataFrame(
+        {
+            "subject_id": subject_id,
+            "stay_id": stay_id,
+            "sofa_hour": time_value,
+            "y_true": y_true.astype(np.int8),
+            "y_prob_raw": y_prob_raw,
+            "y_prob": y_prob_calibrated,
+        }
+    ).to_csv(path, index=False, compression="gzip")
+
+
+def normalized_rule_drift(model: TemporalAttentionFNN) -> float:
+    """以每組參數的初始 RMS 正規化，避免不同生理尺度主導 drift。"""
+    ratios = []
+    static = model.static_fnn
+    for feature in static.feature_names:
+        pairs = [
+            (static.centers[feature], getattr(static, f"initial_centers__{feature}")),
+            (static.sigma(feature), getattr(static, f"initial_sigmas__{feature}")),
+            (static.rule_weights[feature], getattr(static, f"initial_rule_weights__{feature}")),
+        ]
+        for current, initial in pairs:
+            delta_rms = torch.sqrt(torch.mean((current - initial).square()))
+            initial_rms = torch.sqrt(torch.mean(initial.square()))
+            ratios.append(float((delta_rms / (initial_rms + 1.0)).detach().cpu().item()))
+    if static.cross_rule_weights.numel() > 0:
+        delta_rms = torch.sqrt(
+            torch.mean((static.cross_rule_weights - static.initial_cross_rule_weights).square())
+        )
+        initial_rms = torch.sqrt(torch.mean(static.initial_cross_rule_weights.square()))
+        ratios.append(float((delta_rms / (initial_rms + 1.0)).detach().cpu().item()))
+    return float(np.mean(ratios)) if ratios else 0.0
+
+
+def rule_inventory(model: TemporalAttentionFNN) -> pd.DataFrame:
+    rows = []
+    static = model.static_fnn
+    for feature in static.feature_names:
+        centers = static.centers[feature].detach().cpu().numpy()
+        sigmas = static.sigma(feature).detach().cpu().numpy()
+        weights = static.rule_weights[feature].detach().cpu().numpy()
+        initial_centers = getattr(static, f"initial_centers__{feature}").cpu().numpy()
+        initial_sigmas = getattr(static, f"initial_sigmas__{feature}").cpu().numpy()
+        initial_weights = getattr(static, f"initial_rule_weights__{feature}").cpu().numpy()
+        for index, term in enumerate(static.term_names[feature]):
+            rows.append(
+                {
+                    "rule_id": f"feature::{feature}::{term}",
+                    "rule_type": "feature",
+                    "rule": f"IF {feature} IS {term}",
+                    "initial_weight": float(initial_weights[index]),
+                    "trained_weight": float(weights[index]),
+                    "effective_weight": float(weights[index]),
+                    "importance": float(abs(weights[index])),
+                    "initial_center": float(initial_centers[index]),
+                    "trained_center": float(centers[index]),
+                    "initial_sigma": float(initial_sigmas[index]),
+                    "trained_sigma": float(sigmas[index]),
+                }
+            )
+    for index, rule in enumerate(static.rule_configs):
+        antecedents = " AND ".join(
+            f"{feature} IS {term}" for feature, term in rule["antecedents"]
+        )
+        signature = "&".join(
+            sorted(f"{feature}={term}" for feature, term in rule["antecedents"])
+        )
+        initial_weight = float(static.initial_cross_rule_weights[index].detach().cpu().item())
+        trained_weight = float(static.cross_rule_weights[index].detach().cpu().item())
+        effective_weight = trained_weight * float(static.rule_score_scale)
+        rows.append(
+            {
+                "rule_id": f"cross::{signature}",
+                "rule_type": "cross_feature",
+                "rule": f"IF {antecedents}",
+                "initial_weight": initial_weight,
+                "trained_weight": trained_weight,
+                "effective_weight": effective_weight,
+                "importance": abs(effective_weight),
+                "initial_center": math.nan,
+                "trained_center": math.nan,
+                "initial_sigma": math.nan,
+                "trained_sigma": math.nan,
+            }
+        )
+    return pd.DataFrame(rows).sort_values("importance", ascending=False).reset_index(drop=True)
+
+
 def evaluate_rule_quality(
     model: TemporalAttentionFNN,
     dataset: Dataset,
     device: torch.device,
     batch_size: int,
     max_batches: int | None,
+    rule_score_scale: float,
 ) -> dict[str, float]:
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    guideline_reference = ExpertGuidedStaticFNN(
+        expert_feature_config,
+        clinical_rule_priors,
+        rule_score_scale=rule_score_scale,
+    ).to(device)
+    guideline_reference.eval()
     model.eval()
     activation_sum = 0.0
     activation_count = 0
@@ -756,11 +1077,19 @@ def evaluate_rule_quality(
     attention_entropy_sum = 0.0
     attention_last_6h_sum = 0.0
     attention_count = 0
+    learned_static_scores = []
+    guideline_static_scores = []
     with torch.no_grad():
         for batch_idx, (batch_x, _) in enumerate(loader, start=1):
             if max_batches is not None and batch_idx > max_batches:
                 break
             output = model(batch_x.to(device))
+            raw_current = batch_x[:, -1, : len(FEATURE_ORDER)].to(device)
+            guideline_output = guideline_reference(raw_current)
+            learned_static_scores.append(output.hourly_risk_scores[:, -1].detach().cpu().numpy())
+            guideline_static_scores.append(
+                guideline_output["static_risk_score"].detach().cpu().numpy()
+            )
             if output.rule_activations.numel() > 0:
                 activations = output.rule_activations.detach()
                 activation_sum += float(activations.sum().item())
@@ -790,6 +1119,12 @@ def evaluate_rule_quality(
     top_rule_activation = top_activation_sum / max(top_activation_count, 1)
     attention_entropy = attention_entropy_sum / max(attention_count, 1)
     attention_last_6h = attention_last_6h_sum / max(attention_count, 1)
+    if learned_static_scores:
+        learned = np.concatenate(learned_static_scores)
+        guideline = np.concatenate(guideline_static_scores)
+        rule_concordance = float(pd.Series(learned).corr(pd.Series(guideline), method="spearman"))
+    else:
+        rule_concordance = math.nan
 
     return {
         "num_cross_rules": float(rule_count),
@@ -799,6 +1134,8 @@ def evaluate_rule_quality(
         "mean_top_rule_activation": top_rule_activation,
         "rule_sparsity_loss": float(model.static_fnn.sparsity_loss().detach().cpu().item()),
         "rule_drift_loss": float(model.static_fnn.drift_loss().detach().cpu().item()),
+        "rule_drift_normalized": normalized_rule_drift(model),
+        "rule_concordance": rule_concordance,
         "nonnegative_weight_loss": float(model.static_fnn.nonnegative_weight_loss().detach().cpu().item()),
         "negative_cross_rule_count": float((cross_weights < 0).sum().item()) if rule_count else 0.0,
         "attention_entropy": attention_entropy,
@@ -840,6 +1177,10 @@ def train_variant(
         use_explicit_temporal_features=spec.explicit_temporal_features,
         explicit_temporal_scale=args.explicit_temporal_scale,
     ).to(device)
+    if not spec.expert_init and model.explicit_temporal_weights is not None:
+        with torch.no_grad():
+            model.explicit_temporal_weights.uniform_(0.0, 0.20)
+            model.initial_explicit_temporal_weights.copy_(model.explicit_temporal_weights)
 
     criterion = NeuroSymbolicLoss(
         lambda_cons=spec.lambda_cons,
@@ -956,22 +1297,53 @@ def train_variant(
     if best_state is not None:
         model.load_state_dict(best_state)
 
-    # validation 只用於選 checkpoint；test 在選定後評估一次。
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=device.type == "cuda",
-    )
-    test_losses, test_metrics = run_epoch(
+    # validation 只用於 checkpoint selection、calibration；test 在定案後評估一次。
+    _, _, val_targets, val_prob_raw = evaluate_dataset_with_predictions(
         model=model,
-        loader=test_loader,
+        dataset=val_dataset,
         criterion=criterion,
         device=device,
-        optimizer=None,
-        grad_clip=None,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        max_batches=zero_to_none(args.limit_val_batches),
+    )
+    calibration_intercept, calibration_slope = calibration_intercept_slope(
+        val_targets.astype(np.int8),
+        val_prob_raw,
+    )
+    val_prob = apply_platt_calibration(
+        val_prob_raw,
+        calibration_intercept,
+        calibration_slope,
+    )
+    test_losses, test_metrics_raw, test_targets, test_prob_raw = evaluate_dataset_with_predictions(
+        model=model,
+        dataset=test_dataset,
+        criterion=criterion,
+        device=device,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
         max_batches=zero_to_none(args.limit_test_batches),
+    )
+    test_prob = apply_platt_calibration(
+        test_prob_raw,
+        calibration_intercept,
+        calibration_slope,
+    )
+    test_metrics = classification_metrics(test_targets, test_prob)
+    save_predictions(
+        variant_dir / "validation_predictions.csv.gz",
+        val_dataset,
+        val_targets,
+        val_prob_raw,
+        val_prob,
+    )
+    save_predictions(
+        variant_dir / "test_predictions.csv.gz",
+        test_dataset,
+        test_targets,
+        test_prob_raw,
+        test_prob,
     )
 
     rule_quality = evaluate_rule_quality(
@@ -980,7 +1352,10 @@ def train_variant(
         device=device,
         batch_size=args.batch_size,
         max_batches=zero_to_none(args.rule_quality_batches),
+        rule_score_scale=args.rule_score_scale,
     )
+    inventory = rule_inventory(model)
+    inventory.to_csv(variant_dir / "rule_inventory.csv", index=False)
 
     torch.save(
         {
@@ -996,6 +1371,9 @@ def train_variant(
             "best_val_metrics": best_val_metrics,
             "test_losses": test_losses,
             "test_metrics": test_metrics,
+            "test_metrics_raw": test_metrics_raw,
+            "calibration_intercept": calibration_intercept,
+            "calibration_slope": calibration_slope,
             "rule_quality": rule_quality,
         },
         variant_dir / "best_model.pt",
@@ -1077,6 +1455,12 @@ def train_variant(
         "test_ece": test_metrics.get("ece", math.nan),
         "test_mce": test_metrics.get("mce", math.nan),
         "test_log_loss": test_metrics.get("log_loss", math.nan),
+        "test_raw_brier": test_metrics_raw.get("brier", math.nan),
+        "test_raw_ece": test_metrics_raw.get("ece", math.nan),
+        "test_raw_log_loss": test_metrics_raw.get("log_loss", math.nan),
+        "validation_platt_intercept": calibration_intercept,
+        "validation_platt_slope": calibration_slope,
+        "calibration_method": "validation_only_platt",
         "best_epoch": best_epoch,
         "actual_epochs": actual_epochs,
         "stopped_early": int(stopped_early),
@@ -1135,7 +1519,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lambda-cons", type=float, default=0.1)
     parser.add_argument("--lambda-sparse", type=float, default=0.001)
     parser.add_argument("--lambda-drift", type=float, default=0.001)
-    parser.add_argument("--random-lambda-drift", type=float, default=0.0)
+    parser.add_argument(
+        "--random-lambda-drift",
+        type=float,
+        default=None,
+        help="預設與 full model 相同；僅供額外 sensitivity analysis 覆寫。",
+    )
     parser.add_argument("--lambda-nonnegative", type=float, default=0.05)
     parser.add_argument("--explicit-temporal-scale", type=float, default=1.0)
     parser.add_argument("--limit-train-batches", type=int, default=0)
@@ -1148,81 +1537,47 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-    args = apply_best_params(args, load_best_params(args.best_params_json))
-    selected_variants = parse_variants(args.variants)
-    parsed_seeds = parse_seeds(args.seeds, args.seed)
-    if len(parsed_seeds) != 1:
-        raise ValueError("此 CLI 一次只接受一個 seed；多 seed 請分次執行並使用不同 output-dir。")
-    args.seed = parsed_seeds[0]
-    set_seed(args.seed)
-    protocol = validate_comparison_args(
-        args.comparison_mode,
-        args.comparison_protocol,
-        args.target_col,
-        args.seq_length,
-    )
-    if not args.allow_incomplete_cohort and any(
-        value > 0 for value in [args.max_train_windows, args.max_val_windows, args.max_test_windows]
-    ):
-        raise ValueError("正式比較不可再抽樣 windows；equal-sample 已由共用 manifest 固定。")
-
-    device = choose_device(args.device)
-    run_name = datetime.now().strftime("fnn_ablation_%Y%m%d_%H%M%S")
-    output_dir = Path(args.output_dir) if args.output_dir else Path("outputs") / "fnn_ablation" / run_name
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"使用裝置: {device}")
-    print(f"輸出資料夾: {output_dir}")
-    print(f"Variants: {', '.join(selected_variants)}")
-
-    df = load_training_frame(
-        csv_path=Path(args.csv),
-        feature_cols=FEATURE_ORDER,
-        target_col=args.target_col,
-        time_col=args.time_col,
-        split_col=args.split_col,
-        max_rows=zero_to_none(args.max_rows),
-        max_stays=zero_to_none(args.max_stays),
-        chunk_size=args.chunk_size,
-        sofa_csv=args.sofa_csv,
-    )
-    print(f"讀入列數: {len(df):,}，stay 數: {df['stay_id'].nunique():,}")
-
-    features, labels, stay_ids, split_values, time_values = prepare_arrays(
-        df=df,
-        feature_cols=FEATURE_ORDER,
-        target_col=args.target_col,
-        time_col=args.time_col,
-        split_col=args.split_col,
-    )
-    del df
-    gc.collect()
-
-    if args.split_col != "subject_id":
-        raise ValueError("正式消融實驗必須以 subject_id 做 patient-level split。")
-    train_ids, val_ids, test_ids = split_ids_for_values(split_values, args.split_manifest)
-    train_window_ids = window_ids_for_mode(
-        args.comparison_mode, args.equal_sample_windows, args.target_col, "train"
-    )
-    val_window_ids = window_ids_for_mode(
-        args.comparison_mode, args.equal_sample_windows, args.target_col, "validation"
-    )
+def run_seed_ablation(
+    args: argparse.Namespace,
+    run_seed: int,
+    selected_variants: list[str],
+    features: np.ndarray,
+    labels: np.ndarray,
+    stay_ids: np.ndarray,
+    split_values: np.ndarray,
+    time_values: np.ndarray,
+    train_ids: set,
+    val_ids: set,
+    test_ids: set,
+    train_window_ids: np.ndarray | None,
+    val_window_ids: np.ndarray | None,
+    protocol: dict[str, Any],
+    device: torch.device,
+    output_dir: Path,
+) -> None:
+    args.seed = run_seed
+    set_seed(run_seed)
     train_id_array = np.fromiter(train_ids, dtype=split_values.dtype)
     train_row_mask = np.isin(split_values, train_id_array)
     random_feature_configs = make_random_feature_config(
-        features, args.seed + 1000, row_mask=train_row_mask
+        features[:, : len(FEATURE_ORDER)],
+        run_seed + 1000,
+        row_mask=train_row_mask,
     )
-    random_rule_configs = make_random_rule_configs(random_feature_configs, args.seed + 2000)
+    random_rule_configs = make_random_rule_configs(
+        random_feature_configs,
+        run_seed + 2000,
+    )
     variants = build_variants(args, random_feature_configs, random_rule_configs)
-
-    (output_dir / "ablation_config.json").write_text(
+    seed_dir = output_dir / f"seed_{run_seed}"
+    seed_dir.mkdir(parents=True, exist_ok=True)
+    (seed_dir / "run_config.json").write_text(
         json.dumps(
             {
                 **vars(args),
                 "selected_variants": selected_variants,
                 "feature_order": FEATURE_ORDER,
+                "input_order": explicit_temporal_input_order(FEATURE_ORDER),
             },
             ensure_ascii=False,
             indent=2,
@@ -1233,10 +1588,14 @@ def main() -> None:
     summary_path = output_dir / "ablation_summary.csv"
     for variant_name in selected_variants:
         spec = variants[variant_name]
-        print("\n" + "=" * 80)
-        print(f"Running: {spec.display_name}")
-        print("=" * 80)
+        result_path = seed_dir / variant_name / "result.json"
+        if result_path.exists() and not args.no_resume:
+            print(f"Skip completed: seed {run_seed} / {variant_name}")
+            continue
 
+        print("\n" + "=" * 80)
+        print(f"Seed {run_seed} | Running: {spec.display_name}")
+        print("=" * 80)
         train_dataset, val_dataset, test_dataset = build_datasets_for_variant(
             spec=spec,
             features=features,
@@ -1265,16 +1624,12 @@ def main() -> None:
             args.comparison_mode,
             allow_incomplete=args.allow_incomplete_cohort,
         )
-        write_cohort_audit(
-            output_dir / f"seed_{args.seed}" / variant_name / "cohort_audit.json",
-            cohort_records,
-        )
+        write_cohort_audit(seed_dir / variant_name / "cohort_audit.json", cohort_records)
         print(
             f"Train windows: {len(train_dataset):,} | pos {train_pos:,} | neg {train_neg:,} | "
             f"Val windows: {len(val_dataset):,} | pos {val_pos:,} | neg {val_neg:,} | "
             f"Test windows: {len(test_dataset):,} | pos {test_pos:,} | neg {test_neg:,}"
         )
-
         row = train_variant(
             spec=spec,
             train_dataset=train_dataset,
@@ -1283,20 +1638,135 @@ def main() -> None:
             device=device,
             output_dir=output_dir,
             args=args,
-            run_seed=args.seed,
+            run_seed=run_seed,
         )
         append_csv(summary_path, row)
+        rebuild_summaries(output_dir)
         print(
             f"{spec.name} done | test AUROC {finite_or_zero(row['test_auroc']):.4f} | "
             f"AUPRC {finite_or_zero(row['test_auprc']):.4f} | "
-            f"rule drift {finite_or_zero(row['rule_drift_loss']):.4f}"
+            f"rule concordance {finite_or_zero(row['rule_concordance']):.4f}"
         )
-
+        del train_dataset, val_dataset, test_dataset
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
+
+def main() -> None:
+    args = parse_args()
+    args = apply_best_params(args, load_best_params(args.best_params_json))
+    selected_variants = parse_variants(args.variants)
+    parsed_seeds = parse_seeds(args.seeds, args.seed)
+    args.seed = parsed_seeds[0]
+    set_seed(args.seed)
+    protocol = validate_comparison_args(
+        args.comparison_mode,
+        args.comparison_protocol,
+        args.target_col,
+        args.seq_length,
+    )
+    if not args.allow_incomplete_cohort and any(
+        value > 0 for value in [args.max_train_windows, args.max_val_windows, args.max_test_windows]
+    ):
+        raise ValueError("正式比較不可再抽樣 windows；equal-sample 已由共用 manifest 固定。")
+
+    device = choose_device(args.device)
+    run_name = datetime.now().strftime("fnn_ablation_%Y%m%d_%H%M%S")
+    output_dir = Path(args.output_dir) if args.output_dir else Path("outputs") / "fnn_ablation" / run_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"使用裝置: {device}")
+    print(f"輸出資料夾: {output_dir}")
+    print(f"Variants: {', '.join(selected_variants)}")
+
+    use_explicit_inputs = any(name != "static_guideline" for name in selected_variants)
+    input_order = (
+        explicit_temporal_input_order(FEATURE_ORDER)
+        if use_explicit_inputs
+        else list(FEATURE_ORDER)
+    )
+    df = load_training_frame(
+        csv_path=Path(args.csv),
+        feature_cols=input_order,
+        target_col=args.target_col,
+        time_col=args.time_col,
+        split_col=args.split_col,
+        max_rows=zero_to_none(args.max_rows),
+        max_stays=zero_to_none(args.max_stays),
+        chunk_size=args.chunk_size,
+        sofa_csv=args.sofa_csv,
+    )
+    print(f"讀入列數: {len(df):,}，stay 數: {df['stay_id'].nunique():,}")
+
+    if use_explicit_inputs:
+        features, labels, stay_ids, split_values, time_values = prepare_explicit_temporal_arrays(
+            df=df,
+            target_col=args.target_col,
+            time_col=args.time_col,
+            split_col=args.split_col,
+        )
+    else:
+        features, labels, stay_ids, split_values, time_values = prepare_arrays(
+            df=df,
+            feature_cols=FEATURE_ORDER,
+            target_col=args.target_col,
+            time_col=args.time_col,
+            split_col=args.split_col,
+        )
+    del df
+    gc.collect()
+
+    if args.split_col != "subject_id":
+        raise ValueError("正式消融實驗必須以 subject_id 做 patient-level split。")
+    train_ids, val_ids, test_ids = split_ids_for_values(split_values, args.split_manifest)
+    train_window_ids = window_ids_for_mode(
+        args.comparison_mode, args.equal_sample_windows, args.target_col, "train"
+    )
+    val_window_ids = window_ids_for_mode(
+        args.comparison_mode, args.equal_sample_windows, args.target_col, "validation"
+    )
+    (output_dir / "ablation_config.json").write_text(
+        json.dumps(
+            {
+                **vars(args),
+                "seeds": parsed_seeds,
+                "selected_variants": selected_variants,
+                "feature_order": FEATURE_ORDER,
+                "input_order": input_order,
+                "calibration_method": "validation_only_platt",
+                "rule_concordance_definition": "Spearman correlation with frozen guideline static risk on validation windows",
+                "rule_stability_definition": "Mean pairwise Top-10 rule-importance Jaccard across seeds",
+                "rule_drift_definition": "Mean parameter-group RMSE normalized by initial RMS plus one",
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    for run_seed in parsed_seeds:
+        run_seed_ablation(
+            args=args,
+            run_seed=run_seed,
+            selected_variants=selected_variants,
+            features=features,
+            labels=labels,
+            stay_ids=stay_ids,
+            split_values=split_values,
+            time_values=time_values,
+            train_ids=train_ids,
+            val_ids=val_ids,
+            test_ids=test_ids,
+            train_window_ids=train_window_ids,
+            val_window_ids=val_window_ids,
+            protocol=protocol,
+            device=device,
+            output_dir=output_dir,
+        )
+
     print("\n消融實驗完成")
+    summary_path = output_dir / "ablation_summary.csv"
     print(f"Summary: {summary_path}")
     print(f"Artifacts: {output_dir}")
     rebuild_summaries(output_dir)
