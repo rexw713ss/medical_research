@@ -1,0 +1,103 @@
+{
+  "generated_utc": "2026-07-10T06:17:58.559187+00:00",
+  "study": "Primary 6-hour SOFA increase >=2 KG-TFNN",
+  "python": "3.12.12 (main, Feb 12 2026, 00:40:26) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.9.0",
+    "matplotlib": "3.10.9",
+    "torch": "2.5.1+cu121",
+    "optuna": "4.9.0",
+    "xgboost": "3.3.0",
+    "lightgbm": "4.6.0",
+    "interpret": "0.7.8",
+    "pygam": "0.12.0"
+  },
+  "torch_environment": {
+    "torch_version": "2.5.1+cu121",
+    "cuda_available": true,
+    "cuda_runtime": "12.1",
+    "cudnn_version": 90100,
+    "gpu": "Quadro P2200"
+  },
+  "files": {
+    "patient_split.csv": {
+      "bytes": 4174752,
+      "sha256": "821272fca0bc092caf6ee81a0c3f832b914e7a04d8e8f8c6bceaf6e249a16620"
+    },
+    "comparison_protocol.json": {
+      "bytes": 7670,
+      "sha256": "a78a00288aafdd452a70ff63baeebefcb8825a3b39fd836434bdb2ec7a842878"
+    },
+    "equal_sample_windows.csv.gz": {
+      "bytes": 5067568,
+      "sha256": "0ace280895a83c86ac375ab9a6f14d15db7f57b78c66baf1f06cf5d1b59883bb"
+    },
+    "requirements.txt": {
+      "bytes": 173,
+      "sha256": "f280656f6acf60d616b1ab87d23022e4b22ccf0de27a74662be9c72640d024aa"
+    },
+    "anfis_model.py": {
+      "bytes": 29746,
+      "sha256": "0ab3752de72dee48d9f34c40faaf161b41153f37e4c61a39e959264b6e587a52"
+    },
+    "train_fnn.py": {
+      "bytes": 37193,
+      "sha256": "50fd45a5edc7365dffa0185125f0250d68251346483c709db53ded3b181ab367"
+    },
+    "ablation_fnn_experiments.py": {
+      "bytes": 72895,
+      "sha256": "8ebd9ffe7594395ea9ea9a747d401d64562348416a799e1055e22aae42c55aec"
+    },
+    "advanced_model_evaluation.py": {
+      "bytes": 37056,
+      "sha256": "835c0a44c1e6e8badc423b4102405eec67045532ac0191b17af01a42199b8d5a"
+    },
+    "clinical_sensitivity_analyses.py": {
+      "bytes": 22400,
+      "sha256": "b2f5fab0dfa5bf791860398fc7fe3fdb5dbf1c826c96161104637c5ff23c691e"
+    },
+    "eicu_hospital_sensitivity.py": {
+      "bytes": 6586,
+      "sha256": "4731ab8e9f237a7130209d01db1a84bdb9b34b3545dbb7510575e68814d150ef"
+    },
+    "outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt": {
+      "bytes": 73951,
+      "sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688"
+    },
+    "outputs/explicit_temporal_fnn_tuning_6h/best_params.json": {
+      "bytes": 932,
+      "sha256": "5dd2c201c84fc2fbeac2e68d61b1cbcf570334fab4fa7a5513e8cd4f3596f79c"
+    },
+    "outputs/final_test_evaluation_6h/FINAL_TEST_LOCK.json": {
+      "bytes": 1198,
+      "sha256": "220ff1e915abd3b71b026addbb4c6ee58481187c7e114b40ef60b844dc2ff803"
+    },
+    "outputs/explicit_kg_tfnn_paired_comparison_6h/input_audit.json": {
+      "bytes": 4878,
+      "sha256": "d81b6dbfad98c72b8de424b6e0392665a7d37b7c1b210b05640cfc9b71874db4"
+    },
+    "outputs/clinical_sensitivity_analyses_6h/analysis_config.json": {
+      "bytes": 435,
+      "sha256": "40c916d7769acaf42adb672abdd319661c298c202e22d44cfd2ad677707939a7"
+    },
+    "outputs/eicu_hospital_sensitivity_6h/analysis_config.json": {
+      "bytes": 307,
+      "sha256": "1f6e3db541ba035a2fde1ed7fad2698c6a8a763652e580ad46466a46c6b5c5e8"
+    },
+    "outputs/missingness_ablation_6h_equal_sample/ablation_config.json": {
+      "bytes": 3516,
+      "sha256": "2d7824c72cd9d85d8b6e4498e6071b2c0e28521bc89cfac61fd3554f8fdf020d"
+    }
+  },
+  "missing_expected_files": [],
+  "test_lock_policy": "Test outcomes were excluded from tuning, checkpoint selection, calibration, and threshold selection.",
+  "bootstrap_clusters": {
+    "internal_and_subgroups": "subject_id",
+    "external_primary": "subject_id",
+    "external_hospital_sensitivity": "hospital_id"
+  }
+}

@@ -14,9 +14,14 @@
 | `explicit_temporal_observation_sensitivity_6h/` | 4/6/12/24 h observation windows、3 seeds | Observation-window sensitivity |
 | `fair_comparison_6h_equal_sample/` | 共同 predictors、split、test windows 的模型與 predictions | 6 h benchmark 支援資料 |
 | `advanced_evaluation_6h_equal_sample/` | 500 次 patient bootstrap、paired comparison、DCA、lead time、calibration | 6 h benchmark 結果 |
+| `explicit_kg_tfnn_paired_comparison_6h/` | Explicit KG-TFNN 與 LR、EBM、XGBoost、GRU 的相同視窗 paired comparison | Primary equal-sample comparison；1,000 次 subject bootstrap |
+| `clinical_sensitivity_analyses_6h/` | SOFA outcome sensitivity、event alarm burden、MIMIC subgroups | Frozen full-cohort model sensitivity analyses |
+| `missingness_ablation_6h_equal_sample/` | No-missingness 與 missingness-only 3-seed ablation | Missingness contribution analysis |
+| `eicu_hospital_sensitivity_6h/` | Per-hospital performance 與 hospital-clustered bootstrap | External site heterogeneity sensitivity |
 | `eicu_readiness/` | eICU 原始資料與 cohort readiness audit | 外部資料稽核 |
 | `eicu_external_validation/final_frozen_model_evaluation/` | Final checkpoint、完整 MIMIC validation transfer、500 次 clustered bootstrap | 最終外部驗證 |
 | `manuscript_tables_figures_6h/` | 成人 eligibility audit、Table 1–5、Figure 1–5 | 主文 cohort 與整合圖表 |
+| `reproducibility_6h/` | Package versions、split/protocol/checkpoint/code SHA-256 | Primary analysis reproducibility manifest |
 | `model_evaluation/` | 2026-07-05 產生的 clinical-score 6/12/24 h diagnostic report | 6 h 可供 primary 參考；12/24 h 僅屬 secondary，且尚未包含新版 FNN |
 
 ## Tuning 結果

@@ -1,0 +1,12 @@
+{
+  "bootstrap_unit": "hospital_id",
+  "bootstrap_reps": 500,
+  "seed": 42,
+  "per_hospital_minimum_patients": 100,
+  "per_hospital_minimum_positive_windows": 50,
+  "no_eicu_fitting": true,
+  "thresholds_from_mimic_validation": {
+    "0.9": 0.0923914110515553,
+    "0.95": 0.116400696126772
+  }
+}

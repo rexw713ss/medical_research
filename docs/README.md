@@ -12,6 +12,8 @@
 - [Rule Evaluation Framework 實驗結果](rule_evaluation_framework_6h.md)
 - [eICU final external validation](eicu_final_external_validation_6h.md)
 - [成人 cohort、Table 1–5 與 Figure 1–5](adult_cohort_manuscript_artifacts.md)
+- [TRIPOD+AI reporting checklist](TRIPOD_AI_checklist.md)
+- [PROBAST+AI risk-of-bias self-assessment](PROBAST_AI_checklist.md)
 - [正式輸出索引](../outputs/README.md)
 
 ## 方法
@@ -24,6 +26,8 @@
 ## 結果
 
 - [MIMIC-IV 6 h baseline benchmark](mimic_iv_6h_evaluation_report.md)
+- [Clinical sensitivity analyses](../outputs/clinical_sensitivity_analyses_6h/clinical_sensitivity_report.md)
+- [eICU hospital-clustered sensitivity](../outputs/eicu_hospital_sensitivity_6h/eicu_hospital_sensitivity_report.md)
 - [論文圖表清單](paper_figures.md)
 - [eICU external validation report](../outputs/eicu_external_validation/final_frozen_model_evaluation/eicu_external_validation_report.md)
 

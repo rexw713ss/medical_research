@@ -14,6 +14,9 @@
 | 正式消融 predictive performance、calibration、component effects、rule quality | `outputs/fnn_ablation_6h_equal_sample/figures/` |
 | Observation-window sensitivity、explicit temporal coefficients | `outputs/explicit_temporal_observation_sensitivity_6h/figures/` |
 | Baseline ROC、PR、calibration、DCA、risk strata | `outputs/advanced_evaluation_6h_equal_sample/figures/` |
+| Explicit KG-TFNN paired ROC、PR、calibration、DCA、risk strata | `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/figures/` |
+| SOFA-definition sensitivity、event-level alarm burden、MIMIC subgroup forest | `outputs/clinical_sensitivity_analyses_6h/figures/` |
+| eICU hospital-level heterogeneity | `outputs/eicu_hospital_sensitivity_6h/figures/` |
 | Rule membership before/after、TP/FP/FN timelines | `outputs/rule_evaluation_6h/figures/` |
 | Final eICU external ROC/PR、calibration、risk strata | `outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
 | Figure 1 cohort flow、Figure 2 architecture、Figure 3 calibration、Figure 4 DCA、Figure 5 timelines | `outputs/manuscript_tables_figures_6h/figures/` |
@@ -36,8 +39,8 @@
 
 - MIMIC/eICU cohort flow diagram已產生。
 - MIMIC versus eICU missingness/domain-shift heatmap。
-- Age、sex、ethnicity、ICU type subgroup forest plot。
-- Hospital-level external performance distribution。
+- Age、sex、ethnicity、ICU type、current SOFA subgroup forest plot 已產生。
+- Hospital-level external performance distribution 已產生。
 - Internal/external decision curve已產生；lead-time distribution 尚待整理。
 
 圖表數值必須來自固定 predictions 與正式 evaluation CSV，不可從圖片手動抄錄。

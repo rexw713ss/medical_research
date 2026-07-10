@@ -301,20 +301,125 @@ def patient_bootstrap(
     score = frame["y_prob"].to_numpy(dtype=float)
     subjects, subject_codes = np.unique(frame["subject_id"], return_inverse=True)
     rng = np.random.default_rng(seed)
+
+    ascending = np.argsort(score, kind="mergesort")
+    y_asc = y[ascending]
+    score_asc = score[ascending]
+    codes_asc = subject_codes[ascending]
+    tie_starts = np.r_[0, np.flatnonzero(score_asc[1:] != score_asc[:-1]) + 1]
+
+    descending = np.argsort(-score, kind="mergesort")
+    y_desc = y[descending]
+    codes_desc = subject_codes[descending]
+    positive_desc = y_desc == 1
+
+    n_subjects = len(subjects)
+    subject_window_count = np.bincount(subject_codes, minlength=n_subjects).astype(float)
+    subject_squared_error = np.bincount(
+        subject_codes,
+        weights=(score - y) ** 2,
+        minlength=n_subjects,
+    )
+    bin_ids = np.minimum(np.digitize(score, np.linspace(0.1, 0.9, 9)), 9)
+    bin_subject_count = np.vstack(
+        [
+            np.bincount(subject_codes, weights=(bin_ids == bin_idx), minlength=n_subjects)
+            for bin_idx in range(10)
+        ]
+    )
+    bin_subject_score = np.vstack(
+        [
+            np.bincount(
+                subject_codes,
+                weights=score * (bin_ids == bin_idx),
+                minlength=n_subjects,
+            )
+            for bin_idx in range(10)
+        ]
+    )
+    bin_subject_event = np.vstack(
+        [
+            np.bincount(
+                subject_codes,
+                weights=(y == 1) * (bin_ids == bin_idx),
+                minlength=n_subjects,
+            )
+            for bin_idx in range(10)
+        ]
+    )
+    operating_subject_counts = {}
+    for specificity, threshold in thresholds.items():
+        predicted = score >= threshold
+        operating_subject_counts[specificity] = {
+            "tp": np.bincount(subject_codes, weights=predicted & (y == 1), minlength=n_subjects),
+            "fn": np.bincount(subject_codes, weights=(~predicted) & (y == 1), minlength=n_subjects),
+            "tn": np.bincount(subject_codes, weights=(~predicted) & (y == 0), minlength=n_subjects),
+            "fp": np.bincount(subject_codes, weights=predicted & (y == 0), minlength=n_subjects),
+        }
+
     rows = []
     for replicate in range(reps):
         subject_weight = rng.multinomial(len(subjects), np.full(len(subjects), 1 / len(subjects)))
-        weight = subject_weight[subject_codes].astype(float)
-        total_weight = weight.sum()
+        subject_weight = subject_weight.astype(float)
+        total_weight = float(np.dot(subject_weight, subject_window_count))
+
+        weights_asc = subject_weight[codes_asc]
+        positive_by_tie = np.add.reduceat(weights_asc * (y_asc == 1), tie_starts)
+        negative_by_tie = np.add.reduceat(weights_asc * (y_asc == 0), tie_starts)
+        total_positive = positive_by_tie.sum()
+        total_negative = negative_by_tie.sum()
+        negative_before = np.cumsum(negative_by_tie) - negative_by_tie
+        auroc = np.sum(positive_by_tie * (negative_before + 0.5 * negative_by_tie))
+        auroc = auroc / (total_positive * total_negative)
+
+        weights_desc = subject_weight[codes_desc]
+        positive_weight = weights_desc * positive_desc
+        cumulative_positive = np.cumsum(positive_weight)
+        cumulative_total = np.cumsum(weights_desc)
+        precision = np.divide(
+            cumulative_positive,
+            cumulative_total,
+            out=np.zeros_like(cumulative_positive),
+            where=cumulative_total > 0,
+        )
+        auprc = np.sum(precision * positive_weight) / total_positive
+
+        bin_count = bin_subject_count @ subject_weight
+        bin_score = bin_subject_score @ subject_weight
+        bin_event = bin_subject_event @ subject_weight
+        valid_bins = bin_count > 0
+        ece = np.sum(
+            (bin_count[valid_bins] / total_weight)
+            * np.abs(
+                bin_score[valid_bins] / bin_count[valid_bins]
+                - bin_event[valid_bins] / bin_count[valid_bins]
+            )
+        )
         row = {
             "replicate": replicate,
-            "auroc": weighted_auc(y, score, weight),
-            "auprc": weighted_auprc(y, score, weight),
-            "brier": float(np.sum(weight * (score - y) ** 2) / total_weight),
-            "ece": weighted_ece(y, score, weight),
+            "auroc": float(auroc),
+            "auprc": float(auprc),
+            "brier": float(np.dot(subject_weight, subject_squared_error) / total_weight),
+            "ece": float(ece),
         }
         for specificity, threshold in thresholds.items():
-            operating = weighted_operating_metrics(y, score, weight, threshold)
+            counts = operating_subject_counts[specificity]
+            tp = np.dot(subject_weight, counts["tp"])
+            fn = np.dot(subject_weight, counts["fn"])
+            tn = np.dot(subject_weight, counts["tn"])
+            fp = np.dot(subject_weight, counts["fp"])
+            sensitivity = tp / (tp + fn) if tp + fn else math.nan
+            specificity_value = tn / (tn + fp) if tn + fp else math.nan
+            ppv = tp / (tp + fp) if tp + fp else math.nan
+            npv = tn / (tn + fn) if tn + fn else math.nan
+            f1 = 2 * ppv * sensitivity / (ppv + sensitivity) if ppv + sensitivity else math.nan
+            operating = {
+                "sensitivity": sensitivity,
+                "specificity": specificity_value,
+                "ppv": ppv,
+                "npv": npv,
+                "f1": f1,
+            }
             tag = int(round(specificity * 100))
             for metric, value in operating.items():
                 row[f"{metric}_at_spec_{tag}"] = value

@@ -36,3 +36,14 @@
 2. Full-cohort 6 h sample-size sensitivity。
 3. eICU external validation。
 4. 12/24 h secondary outcome analyses。
+
+## Additional Robustness Analyses
+
+The following analyses were added after the primary model and test-lock policy were fixed. They do not alter checkpoint selection or the primary outcome:
+
+- SOFA component-completeness outcome sensitivity。
+- Missingness-only and no-missingness ablation。
+- Event-level detection and alarm burden with a 6-hour refractory period。
+- Age、recorded sex、ethnicity、ICU type、current SOFA subgroup performance。
+- Hospital-clustered eICU uncertainty and per-site heterogeneity。
+- TRIPOD+AI reporting matrix and PROBAST+AI project self-assessment。

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "seeds": [
+    42
+  ],
+  "protocol_sha256": "47629531beb32b3d2022e37471835ca592d7779197b7fe3696ee1cc8fc3ad184",
+  "validation_windows": 50000,
+  "test_windows": 830839,
+  "test_subjects": 7287,
+  "identical_windows_and_outcomes": true,
+  "ensemble_definition": "Arithmetic mean of validation-calibrated probabilities across seeds"
+}

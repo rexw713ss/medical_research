@@ -1,109 +1,58 @@
-# MIMIC-IV 6-hour formal evaluation report
+# MIMIC-IV Primary 6-Hour Evaluation
 
-## Evaluation design
+## Evaluation Design
 
-- Outcome: future 6-hour SOFA increase >= 2.
-- Predictors: the same 13 protocol predictors for every model.
-- Observation history: 24 hourly measurements.
-- Equal-sample training cohort: 200,000 windows.
-- Equal-sample validation cohort: 50,000 windows.
-- Independent test cohort: 830,839 windows from 7,287 patients.
-- Test prevalence: 5.69%.
-- Train, validation, and test patients are disjoint according to `patient_split.csv`.
-- All models use exactly the same test windows.
-- Confidence intervals use 500 patient-clustered bootstrap replicates. All hourly
-  windows belonging to the same `subject_id` are resampled together.
-- Operating thresholds and Platt calibration parameters are estimated from validation
-  data only and applied unchanged to the independent test set.
+- Outcome: SOFA increase >=2 within the next 6 hours.
+- Inputs: the same 13 clinical predictors and 24-hour history; the proposed model additionally represents prespecified missingness and time-since channels from those predictors.
+- Equal-sample cohort: 200,000 training windows, 50,000 validation windows, and all 830,839 independent test windows from 7,287 test patients.
+- All compared models use the same patient split, validation/test windows, outcomes, and validation-only probability calibration.
+- Confidence intervals and model differences use 1,000 `subject_id`-clustered bootstrap replicates for the prespecified paired comparison.
+- Test outcomes were not used for tuning, checkpoint selection, calibration, or threshold selection.
 
-The independent test audit passed for all 12 models with no patient overlap or window
-mismatch.
+The key/outcome audit passed for all paired models: explicit KG-TFNN, Logistic Regression, EBM, XGBoost, and GRU.
 
-## Main equal-sample results
+## Primary Equal-Sample Results
 
-| Model | AUROC | AUPRC | Brier after validation-only calibration |
-|---|---:|---:|---:|
-| GRU | 0.6238 | 0.1037 | 0.05285 |
-| LSTM | 0.6156 | 0.1002 | 0.05292 |
-| XGBoost | 0.6073 | 0.0896 | 0.05315 |
-| EBM | 0.6072 | 0.0891 | 0.05316 |
-| Random Forest | 0.6038 | 0.0866 | 0.05322 |
-| GAM | 0.6003 | 0.0878 | 0.05320 |
-| LightGBM | 0.6002 | 0.0872 | 0.05322 |
-| Logistic Regression | 0.5795 | 0.0794 | 0.05341 |
-| KG-Temporal FNN | 0.5747 | 0.0738 | 0.05349 |
-| Decision Tree | 0.5741 | 0.0754 | 0.05345 |
-| NEWS2 | 0.5699 | 0.0736 | 0.05349 |
-| SOFA | 0.4978 | 0.0558 | 0.05368 |
+| Model | AUROC (95% CI) | AUPRC (95% CI) | Brier | ECE |
+|---|---:|---:|---:|---:|
+| Explicit Knowledge-Guided Temporal FNN | 0.6448 (0.6379-0.6515) | 0.1236 (0.1177-0.1297) | 0.0523 | 0.0013 |
+| GRU | 0.6238 (0.6170-0.6306) | 0.1037 (0.0992-0.1082) | 0.0529 | 0.0014 |
+| XGBoost | 0.6073 (0.6007-0.6141) | 0.0896 (0.0859-0.0934) | 0.0532 | 0.0013 |
+| Explainable Boosting Machine | 0.6072 (0.6008-0.6141) | 0.0891 (0.0853-0.0929) | 0.0532 | 0.0012 |
+| Logistic Regression | 0.5795 (0.5718-0.5872) | 0.0794 (0.0760-0.0827) | 0.0534 | 0.0013 |
 
-KG-Temporal FNN AUROC was 0.5747 (patient-clustered 95% CI 0.5678-0.5820),
-and AUPRC was 0.0738 (95% CI 0.0706-0.0768). GRU had the highest discrimination:
-AUROC 0.6238 (95% CI 0.6171-0.6304) and AUPRC 0.1037 (95% CI 0.0994-0.1082).
+Other prespecified baselines remain available in `table_3_model_performance.csv`; the old sequence-only FNN has been removed from the primary proposed-model row.
 
-The full-cohort FNN analysis previously reached AUROC 0.5880 and AUPRC 0.0775.
-It should be reported as a supplementary sample-size sensitivity analysis rather than
-mixed into the equal-sample primary comparison.
+## Paired Comparisons
 
-## Paired comparisons
+Compared with GRU on identical test windows, explicit KG-TFNN improved:
 
-Paired differences use identical subject-level bootstrap replicates for both models.
+- AUROC by 0.0210 (patient-clustered 95% CI 0.0152-0.0267; bootstrap P<0.002).
+- AUPRC by 0.0199 (95% CI 0.0151-0.0248; P<0.002).
+- Brier score by -0.00056 (95% CI -0.00068 to -0.00044; P<0.002).
+- Sensitivity at the 90% specificity operating point by 0.0333.
+- Sensitivity at the 95% specificity operating point by 0.0294.
 
-- FNN versus NEWS2: AUROC difference +0.0049, 95% CI -0.0020 to 0.0118,
-  p = 0.184; not statistically significant.
-- FNN versus Decision Tree: AUROC difference +0.0006, 95% CI -0.0055 to 0.0064,
-  p = 0.768; not statistically significant.
-- FNN versus Logistic Regression: AUROC difference -0.0047, 95% CI -0.0129 to
-  0.0030, p = 0.260; not statistically significant.
-- FNN versus EBM: AUROC difference -0.0325, 95% CI -0.0385 to -0.0273,
-  bootstrap p < 0.002.
-- FNN versus GRU: AUROC difference -0.0490, 95% CI -0.0551 to -0.0429,
-  bootstrap p < 0.002.
+The explicit KG-TFNN also outperformed Logistic Regression, EBM, and XGBoost in paired AUROC and AUPRC. An empirical bootstrap P value stored as zero is reported as `P<2/1000`, not `P=0`.
 
-With 500 bootstrap replicates, an empirical p value reported as zero means
-`p < 2 / 500 = 0.004` for a two-sided comparison; it should not be written as p = 0.
+## Operating Characteristics
 
-## Operating characteristics
+| Validation target specificity | Threshold | Test sensitivity | Test specificity | PPV | NPV |
+|---:|---:|---:|---:|---:|---:|
+| 90% | 0.0925 | 0.2523 | 0.9024 | 0.1350 | 0.9524 |
+| 95% | 0.1152 | 0.1650 | 0.9518 | 0.1713 | 0.9497 |
 
-Validation-defined KG-Temporal FNN thresholds produced:
+Validation-defined risk strata showed monotonic test event rates of 3.89% (low), 6.35% (medium), and 11.99% (high). The window-based lead-time analysis detected 1,291 of 3,710 first deterioration events, with median lead time 4 hours (IQR 2-6).
 
-| Target specificity | Test sensitivity | Observed test specificity | PPV | NPV |
-|---:|---:|---:|---:|---:|
-| 90% | 0.1548 | 0.9004 | 0.0857 | 0.9464 |
-| 95% | 0.0861 | 0.9496 | 0.0935 | 0.9451 |
+After validation-only calibration, test calibration intercept was -0.074 and slope was 0.977. Event-level alert burden with a 6-hour refractory period is reported separately in `outputs/clinical_sensitivity_analyses_6h/`.
 
-At the 90% specificity threshold, FNN detected 390 of 3,710 deterioration events
-(10.5%), with median lead time 6 hours. GRU detected 880 events (23.7%), with median
-lead time 5 hours.
+## Primary Artifacts
 
-Validation-defined FNN risk strata had test event rates of 4.75% (low), 6.41%
-(medium), and 8.37% (high). This shows monotonic risk separation, although the absolute
-separation is modest.
-
-After validation-only Platt calibration, FNN calibration intercept was -0.272 and
-slope was 0.909. Calibration curves use equal-frequency quantile bins because the
-outcome prevalence is low.
-
-## Completed checklist
-
-- Independent patient-level test set: complete.
-- Patient-clustered bootstrap 95% CI: complete, 500 replicates.
-- Paired model comparison: complete for all 12 models.
-- Unified 6-hour ROC, PR, and calibration report: complete.
-- Sensitivity at 90% and 95% specificity: complete.
-- Decision Curve Analysis: complete for thresholds 0.01-0.20.
-- Lead Time Analysis: complete.
-- Low, medium, and high risk stratification: complete.
-- Calibration intercept and slope: complete.
-
-Rule-quality evaluation for the new explicit-temporal FNN remains pending and is not
-part of this baseline benchmark report.
-
-## Primary artifacts
-
-- `outputs/advanced_evaluation_6h_equal_sample/advanced_metrics.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/paired_model_comparisons.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/fixed_specificity_metrics.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/decision_curve.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/lead_time_summary.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/risk_stratification.csv`
-- `outputs/advanced_evaluation_6h_equal_sample/figures/`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/input_audit.json`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/advanced_metrics.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/paired_model_comparisons.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/fixed_specificity_metrics.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/decision_curve.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/lead_time_summary.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/risk_stratification.csv`
+- `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/figures/`

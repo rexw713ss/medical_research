@@ -61,16 +61,16 @@ Missingness is defined from the current-hour raw measurement indicator before fo
 |---|---|---|---|---|---|
 | MIMIC equal-sample comparison | LightGBM | 0.6002 (0.5929-0.6068) | 0.0872 (0.0839-0.0908) | 0.0532 (0.0519-0.0546) | 0.0021 |
 | MIMIC equal-sample comparison | Random Forest | 0.6038 (0.5973-0.6098) | 0.0866 (0.0831-0.0903) | 0.0532 (0.0518-0.0546) | 0.0022 |
-| MIMIC equal-sample comparison | XGBoost | 0.6073 (0.6001-0.6139) | 0.0896 (0.0859-0.0932) | 0.0532 (0.0518-0.0545) | 0.0015 |
-| MIMIC equal-sample comparison | GRU | 0.6238 (0.6171-0.6304) | 0.1037 (0.0994-0.1082) | 0.0529 (0.0515-0.0542) | 0.0027 |
+| MIMIC equal-sample comparison | XGBoost | 0.6073 (0.6007-0.6141) | 0.0896 (0.0859-0.0934) | 0.0532 (0.0517-0.0546) | 0.0013 |
+| MIMIC equal-sample comparison | GRU | 0.6238 (0.6170-0.6306) | 0.1037 (0.0992-0.1082) | 0.0529 (0.0514-0.0542) | 0.0014 |
 | MIMIC equal-sample comparison | LSTM | 0.6156 (0.6090-0.6221) | 0.1002 (0.0958-0.1042) | 0.0529 (0.0516-0.0543) | 0.0023 |
 | MIMIC equal-sample comparison | NEWS2 | 0.5699 (0.5635-0.5765) | 0.0736 (0.0710-0.0765) | 0.0535 (0.0521-0.0549) | 0.0016 |
 | MIMIC equal-sample comparison | SOFA | 0.4978 (0.4895-0.5064) | 0.0558 (0.0540-0.0584) | 0.0537 (0.0523-0.0550) | 0.0021 |
-| MIMIC equal-sample comparison | Sequence-only FNN | 0.5747 (0.5678-0.5820) | 0.0738 (0.0706-0.0768) | 0.0535 (0.0521-0.0549) | 0.0019 |
+| MIMIC equal-sample comparison | Explicit Knowledge-Guided Temporal FNN | 0.6448 (0.6379-0.6515) | 0.1236 (0.1177-0.1297) | 0.0523 (0.0509-0.0536) | 0.0013 |
 | MIMIC equal-sample comparison | Decision Tree | 0.5741 (0.5677-0.5809) | 0.0754 (0.0728-0.0783) | 0.0535 (0.0521-0.0548) | 0.0030 |
-| MIMIC equal-sample comparison | Explainable Boosting Machine | 0.6072 (0.6007-0.6138) | 0.0891 (0.0854-0.0929) | 0.0532 (0.0518-0.0545) | 0.0012 |
+| MIMIC equal-sample comparison | Explainable Boosting Machine | 0.6072 (0.6008-0.6141) | 0.0891 (0.0853-0.0929) | 0.0532 (0.0518-0.0546) | 0.0012 |
 | MIMIC equal-sample comparison | Generalized Additive Model | 0.6003 (0.5933-0.6068) | 0.0878 (0.0841-0.0911) | 0.0532 (0.0518-0.0546) | 0.0018 |
-| MIMIC equal-sample comparison | Logistic Regression | 0.5795 (0.5721-0.5871) | 0.0794 (0.0760-0.0826) | 0.0534 (0.0520-0.0548) | 0.0019 |
+| MIMIC equal-sample comparison | Logistic Regression | 0.5795 (0.5718-0.5872) | 0.0794 (0.0760-0.0827) | 0.0534 (0.0520-0.0548) | 0.0013 |
 | MIMIC full-cohort frozen final model | Knowledge-Guided Temporal FNN | 0.6559 (0.6492-0.6628) | 0.1309 (0.1250-0.1375) | 0.0521 (0.0507-0.0534) | 0.0012 |
 | eICU frozen external validation | Knowledge-Guided Temporal FNN | 0.6221 (0.6192-0.6249) | 0.0922 (0.0902-0.0942) | 0.0459 (0.0455-0.0463) | 0.0267 |
 

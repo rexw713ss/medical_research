@@ -62,6 +62,7 @@ MODEL_LABELS = {
     "news2_score_calibrated": "NEWS2",
     "sofa_score_calibrated": "SOFA",
     "fnn_6h": "Sequence-only FNN",
+    "explicit_kg_tfnn": "Explicit Knowledge-Guided Temporal FNN",
     "decision_tree": "Decision Tree",
     "ebm": "Explainable Boosting Machine",
     "gam": "Generalized Additive Model",
@@ -348,9 +349,46 @@ def performance_table() -> pd.DataFrame:
         )
     else:
         ece = pd.Series(dtype=float)
+
+    # Replace the original sequence-only FNN and overlapping comparator rows with
+    # the prespecified explicit KG-TFNN paired comparison (1,000 clustered draws).
+    paired_path = Path(
+        "outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/advanced_metrics.csv"
+    )
+    metrics["model_key"] = metrics["model"].astype(str).str.split("/").str[-1].str.split(":").str[-1]
+    metrics = metrics[metrics["model_key"] != "fnn_6h"].copy()
+    if paired_path.exists():
+        paired = pd.read_csv(paired_path)
+        paired["model_key"] = paired["model"].astype(str).str.split("/").str[-1].str.split(":").str[-1]
+        replacement_keys = set(paired["model_key"])
+        metrics = pd.concat(
+            [metrics[~metrics["model_key"].isin(replacement_keys)], paired],
+            ignore_index=True,
+            sort=False,
+        )
+    publication_order = [
+        "explicit_kg_tfnn",
+        "gru",
+        "lstm",
+        "xgboost",
+        "lightgbm",
+        "random_forest",
+        "ebm",
+        "gam",
+        "logistic_regression",
+        "decision_tree",
+        "news2_score_calibrated",
+        "sofa_score_calibrated",
+    ]
+    order_map = {key: index for index, key in enumerate(publication_order)}
+    metrics["publication_order"] = metrics["model_key"].map(order_map).fillna(len(order_map))
+    metrics = metrics.sort_values("publication_order")
     rows = []
     for _, row in metrics.iterrows():
-        key = str(row["model"]).split("/")[-1].split(":")[-1]
+        key = row.get("model_key", str(row["model"]).split("/")[-1].split(":")[-1])
+        row_ece = row.get("ece", np.nan)
+        if not np.isfinite(row_ece):
+            row_ece = ece.get(row["model"], np.nan)
         rows.append(
             {
                 "Analysis": "MIMIC equal-sample comparison",
@@ -358,7 +396,7 @@ def performance_table() -> pd.DataFrame:
                 "AUROC (95% CI)": f"{row.auroc:.4f} ({row.auroc_ci95_low:.4f}-{row.auroc_ci95_high:.4f})",
                 "AUPRC (95% CI)": f"{row.auprc:.4f} ({row.auprc_ci95_low:.4f}-{row.auprc_ci95_high:.4f})",
                 "Brier (95% CI)": f"{row.brier:.4f} ({row.brier_ci95_low:.4f}-{row.brier_ci95_high:.4f})",
-                "ECE": f"{ece.get(row['model'], np.nan):.4f}" if row["model"] in ece.index else "NA",
+                "ECE": f"{row_ece:.4f}" if np.isfinite(row_ece) else "NA",
             }
         )
 

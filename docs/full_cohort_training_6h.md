@@ -44,4 +44,4 @@ Raw probabilities 來自 class-weighted BCE，raw Brier 為 0.1962、raw ECE 為
 
 ## 解讀
 
-Checkpoint 由 validation AUROC 選定，SHA-256 為 `158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688`。一次性 final test evaluation 已完成並鎖定。此 full-cohort model 是 6 h sample-size/deployment sensitivity；primary model comparison 仍需在固定 200,000/50,000 equal-sample cohort 重訓 explicit FNN，再與 baseline 做 paired bootstrap。
+Checkpoint 由 validation AUROC 選定，SHA-256 為 `158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688`。一次性 final test evaluation 已完成並鎖定。此 full-cohort model 是 6 h sample-size/deployment sensitivity；primary model comparison 亦已在固定 200,000/50,000 equal-sample cohort 完成，並以相同 test windows 對 baseline 執行 1,000 次 patient-clustered paired bootstrap，結果見 `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/`。

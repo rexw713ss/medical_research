@@ -1,0 +1,106 @@
+{
+  "target_col": "label_sofa_increase_ge2_6h",
+  "models": {
+    "explicit_kg_tfnn": {
+      "validation": {
+        "source": "outputs\\fnn_ablation_6h_equal_sample\\seed_42\\full\\validation_predictions.csv.gz",
+        "source_sha256": "64d76d896e1e9e9d765a9b97539c2e0efdc524eaba7ef05b175eeb98c0e7730c",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob_raw"
+      },
+      "test": {
+        "source": "outputs\\fnn_ablation_6h_equal_sample\\seed_42\\full\\test_predictions.csv.gz",
+        "source_sha256": "8e56c18a6e7ccb0427d092ed2649835304e5e8323cdd5fcb16a2ae4c908744e7",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob_raw"
+      }
+    },
+    "logistic_regression": {
+      "validation": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\logistic_regression\\val_predictions.csv.gz",
+        "source_sha256": "d6ea2effd3f3477db3e56198781c9b2535cd79f6ce1448313fdaab0f176939e0",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\logistic_regression\\test_predictions.csv.gz",
+        "source_sha256": "57e3206cba7d0561dd4573238c9dda27ee7e9efe06f2b3ed31faa67217c40b38",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    },
+    "ebm": {
+      "validation": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\ebm\\val_predictions.csv.gz",
+        "source_sha256": "0b0bc253fff2c04eae5fa993dbbd760aef7f235431ce8bd955220b93f35ce9af",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\ebm\\test_predictions.csv.gz",
+        "source_sha256": "0126fbb0da3400d142df3ecf1612500de2b82e1c3d25db28cb31266750cdd987",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    },
+    "xgboost": {
+      "validation": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\blackbox_6h\\protocol\\xgboost\\val_predictions.csv.gz",
+        "source_sha256": "044daae4c97bc379539789858ca1186d6fc1ce75950428cac5192acaa5f28579",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\blackbox_6h\\protocol\\xgboost\\test_predictions.csv.gz",
+        "source_sha256": "e55bc6402589fd9e96bfd5418367d7623f5e940d937bb448705f120c2a0825aa",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    },
+    "gru": {
+      "validation": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\blackbox_6h\\sequence_raw\\gru\\val_predictions.csv.gz",
+        "source_sha256": "efa353e9252fc254857c1c0e27d30411c2050de31d7ec125907919e05a8b04e3",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\fair_comparison_6h_equal_sample\\blackbox_6h\\sequence_raw\\gru\\test_predictions.csv.gz",
+        "source_sha256": "df12470b59db6da62cca87404409c12f51ce7f5e5e22af0ac20341fcb708b7d2",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    }
+  },
+  "test_windows_outcomes_identical": true
+}

@@ -1,0 +1,13 @@
+{
+  "model": "frozen full-cohort explicit KG-TFNN",
+  "prediction_file": "outputs\\final_test_evaluation_6h\\predictions\\test_predictions.csv.gz",
+  "bootstrap_reps": 500,
+  "bootstrap_unit": "subject_id",
+  "alarm_refractory_hours": 6,
+  "event_definition": "first SOFA increase >=2 event per ICU stay",
+  "thresholds": {
+    "0.9": 0.09239141105155539,
+    "0.95": 0.11640069612677208
+  },
+  "no_model_refitting": true
+}

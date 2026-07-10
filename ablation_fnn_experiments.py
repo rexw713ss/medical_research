@@ -64,6 +64,7 @@ from project_config import (
 )
 from sofa_label_utils import horizon_from_target_col
 from train_fnn import (
+    CLINICAL_DEFAULTS,
     classification_metrics,
     choose_device,
     load_training_frame,
@@ -78,6 +79,8 @@ VARIANT_ORDER = [
     "static_guideline",
     "no_consistency",
     "full",
+    "no_missingness",
+    "missingness_only",
 ]
 
 SUMMARY_METRICS = [
@@ -120,6 +123,7 @@ class VariantSpec:
     lambda_cons: float
     lambda_drift: float
     explicit_temporal_features: bool = False
+    input_mask_mode: str = "full"
 
 
 class AblationWindowDataset(Dataset):
@@ -143,6 +147,7 @@ class AblationWindowDataset(Dataset):
         min_history_length: int,
         allowed_window_ids: np.ndarray | None = None,
         require_all_window_ids: bool = True,
+        input_mask_mode: str = "full",
     ) -> None:
         self.features = features
         self.labels = labels
@@ -151,6 +156,13 @@ class AblationWindowDataset(Dataset):
         self.stay_ids = stay_ids
         self.split_values = split_values
         self.time_values = time_values
+        self.input_mask_mode = input_mask_mode
+        if input_mask_mode not in {"full", "no_missingness", "missingness_only"}:
+            raise ValueError(f"Unknown input mask mode: {input_mask_mode}")
+        self.clinical_defaults = torch.tensor(
+            [CLINICAL_DEFAULTS[feature] for feature in FEATURE_ORDER],
+            dtype=torch.float32,
+        )
         self.window_starts, self.target_indices = self._build_windows(
             stay_ids=stay_ids,
             split_values=split_values,
@@ -234,10 +246,15 @@ class AblationWindowDataset(Dataset):
         start = int(self.window_starts[index])
         end = start + self.input_seq_length
         target_index = int(self.target_indices[index])
-        return (
-            torch.from_numpy(self.features[start:end]),
-            torch.tensor(self.labels[target_index], dtype=torch.float32),
-        )
+        window = torch.from_numpy(self.features[start:end])
+        if self.input_mask_mode != "full":
+            window = window.clone()
+            base_count = len(FEATURE_ORDER)
+            if self.input_mask_mode == "no_missingness":
+                window[:, base_count:] = 0.0
+            elif self.input_mask_mode == "missingness_only":
+                window[:, :base_count] = self.clinical_defaults
+        return window, torch.tensor(self.labels[target_index], dtype=torch.float32)
 
     def label_counts(self) -> tuple[int, int]:
         if len(self) == 0:
@@ -776,6 +793,38 @@ def build_variants(
             lambda_drift=args.lambda_drift,
             explicit_temporal_features=True,
         ),
+        "no_missingness": VariantSpec(
+            name="no_missingness",
+            display_name="Explicit KG-TFNN without missingness channels",
+            description="Full architecture with missingness and time-since channels fixed to zero.",
+            input_seq_length=args.seq_length,
+            min_history_length=args.seq_length,
+            feature_configs=expert_feature_config,
+            rule_configs=clinical_rule_priors,
+            expert_init=True,
+            temporal_design=True,
+            clinical_consistency=True,
+            lambda_cons=args.lambda_cons,
+            lambda_drift=args.lambda_drift,
+            explicit_temporal_features=True,
+            input_mask_mode="no_missingness",
+        ),
+        "missingness_only": VariantSpec(
+            name="missingness_only",
+            display_name="Missingness-only Temporal FNN",
+            description="Clinical values fixed to defaults; only missingness and time-since channels vary.",
+            input_seq_length=args.seq_length,
+            min_history_length=args.seq_length,
+            feature_configs=expert_feature_config,
+            rule_configs=clinical_rule_priors,
+            expert_init=True,
+            temporal_design=True,
+            clinical_consistency=True,
+            lambda_cons=args.lambda_cons,
+            lambda_drift=args.lambda_drift,
+            explicit_temporal_features=True,
+            input_mask_mode="missingness_only",
+        ),
     }
 
 
@@ -823,6 +872,7 @@ def build_datasets_for_variant(
         min_history_length=spec.min_history_length,
         allowed_window_ids=train_window_ids,
         require_all_window_ids=not args.allow_incomplete_cohort,
+        input_mask_mode=spec.input_mask_mode,
     )
     val_dataset = AblationWindowDataset(
         features=variant_features,
@@ -835,6 +885,7 @@ def build_datasets_for_variant(
         min_history_length=spec.min_history_length,
         allowed_window_ids=val_window_ids,
         require_all_window_ids=not args.allow_incomplete_cohort,
+        input_mask_mode=spec.input_mask_mode,
     )
     test_dataset = AblationWindowDataset(
         features=variant_features,
@@ -845,6 +896,7 @@ def build_datasets_for_variant(
         allowed_split_values=test_ids,
         input_seq_length=spec.input_seq_length,
         min_history_length=spec.min_history_length,
+        input_mask_mode=spec.input_mask_mode,
     )
     train_dataset = stratified_subset(train_dataset, zero_to_none(args.max_train_windows), args.seed)
     val_dataset = stratified_subset(val_dataset, zero_to_none(args.max_val_windows), args.seed + 17)
@@ -1367,6 +1419,7 @@ def train_variant(
             "args": vars(args),
             "feature_order": FEATURE_ORDER,
             "explicit_temporal_features": spec.explicit_temporal_features,
+            "input_mask_mode": spec.input_mask_mode,
             "best_val_losses": best_val_losses,
             "best_val_metrics": best_val_metrics,
             "test_losses": test_losses,
@@ -1393,6 +1446,7 @@ def train_variant(
                 "lambda_cons": spec.lambda_cons,
                 "lambda_drift": spec.lambda_drift,
                 "explicit_temporal_features": spec.explicit_temporal_features,
+                "input_mask_mode": spec.input_mask_mode,
                 "train_windows": len(train_dataset),
                 "val_windows": len(val_dataset),
                 "train_positive": train_pos,
@@ -1422,6 +1476,7 @@ def train_variant(
         "temporal_design": int(spec.temporal_design),
         "clinical_consistency": int(spec.clinical_consistency),
         "explicit_temporal_features": int(spec.explicit_temporal_features),
+        "input_mask_mode": spec.input_mask_mode,
         "input_seq_length": spec.input_seq_length,
         "min_history_length": spec.min_history_length,
         "train_windows": len(train_dataset),
@@ -1485,7 +1540,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--comparison-protocol", default=COMPARISON_PROTOCOL_JSON)
     parser.add_argument("--equal-sample-windows", default=EQUAL_SAMPLE_WINDOWS_CSV)
     parser.add_argument("--allow-incomplete-cohort", action="store_true", help="僅限 smoke test。")
-    parser.add_argument("--variants", default="all", help="all or comma list: random_init,static_guideline,no_consistency,full")
+    parser.add_argument(
+        "--variants",
+        default="all",
+        help="all or comma list: random_init,static_guideline,no_consistency,full,no_missingness,missingness_only",
+    )
     parser.add_argument("--seq-length", type=int, default=24)
     parser.add_argument("--static-min-history-hours", type=int, default=24)
     parser.add_argument("--val-frac", type=float, default=0.15, help="舊版相容參數；正式比例由 manifest 決定。")
