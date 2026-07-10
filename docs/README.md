@@ -11,6 +11,7 @@
 - [實際模型萃取的 temporal fuzzy rules](extracted_temporal_rules_6h.md)
 - [Rule Evaluation Framework 實驗結果](rule_evaluation_framework_6h.md)
 - [eICU final external validation](eicu_final_external_validation_6h.md)
+- [成人 cohort、Table 1–5 與 Figure 1–5](adult_cohort_manuscript_artifacts.md)
 - [正式輸出索引](../outputs/README.md)
 
 ## 方法

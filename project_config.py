@@ -9,6 +9,7 @@ from __future__ import annotations
 
 MIMIC_DATA_DIR = "dataset/MIMIC-IV"
 EICU_DATA_DIR = "dataset/e-ICU"
+MINIMUM_ADULT_AGE = 18
 
 SOFA_HOURLY_CSV = "sofa_scores_hourly.csv"
 PRIMARY_HOURLY_FEATURES = "model_hourly_features_v3.csv"

@@ -16,6 +16,7 @@
 | `advanced_evaluation_6h_equal_sample/` | 500 次 patient bootstrap、paired comparison、DCA、lead time、calibration | 6 h benchmark 結果 |
 | `eicu_readiness/` | eICU 原始資料與 cohort readiness audit | 外部資料稽核 |
 | `eicu_external_validation/final_frozen_model_evaluation/` | Final checkpoint、完整 MIMIC validation transfer、500 次 clustered bootstrap | 最終外部驗證 |
+| `manuscript_tables_figures_6h/` | 成人 eligibility audit、Table 1–5、Figure 1–5 | 主文 cohort 與整合圖表 |
 | `model_evaluation/` | 2026-07-05 產生的 clinical-score 6/12/24 h diagnostic report | 6 h 可供 primary 參考；12/24 h 僅屬 secondary，且尚未包含新版 FNN |
 
 ## Tuning 結果
@@ -41,5 +42,7 @@
 - AUROC：0.6221（95% CI 0.6192–0.6249）。
 - AUPRC：0.0922（95% CI 0.0902–0.0942）。
 - Primary analysis 沒有使用 eICU outcome fitting 或 recalibration。
+
+資料來源逐表數量與用途另存於 `manuscript_tables_figures_6h/data_source_inventory.csv`；MIMIC-IV 共使用 7 張表、608,690,476 raw rows，eICU 共使用 8 張表、399,686,522 raw rows。
 
 使用 final full-cohort checkpoint，沒有 eICU fitting 或 recalibration；MIMIC 90%/95% specificity thresholds 在 eICU 的 observed specificity 為 79.0%/88.2%。

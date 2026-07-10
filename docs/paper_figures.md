@@ -16,6 +16,8 @@
 | Baseline ROC、PR、calibration、DCA、risk strata | `outputs/advanced_evaluation_6h_equal_sample/figures/` |
 | Rule membership before/after、TP/FP/FN timelines | `outputs/rule_evaluation_6h/figures/` |
 | Final eICU external ROC/PR、calibration、risk strata | `outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
+| Figure 1 cohort flow、Figure 2 architecture、Figure 3 calibration、Figure 4 DCA、Figure 5 timelines | `outputs/manuscript_tables_figures_6h/figures/` |
+| Table 1–5 publication CSV 與 Markdown | `outputs/manuscript_tables_figures_6h/`, `adult_cohort_manuscript_artifacts.md` |
 
 ## Primary Evaluation 尚待產生
 
@@ -32,10 +34,10 @@
 
 ## Cohort 與 External Validation
 
-- MIMIC/eICU cohort flow diagram。
+- MIMIC/eICU cohort flow diagram已產生。
 - MIMIC versus eICU missingness/domain-shift heatmap。
 - Age、sex、ethnicity、ICU type subgroup forest plot。
 - Hospital-level external performance distribution。
-- Decision curve 與 lead-time distribution。
+- Internal/external decision curve已產生；lead-time distribution 尚待整理。
 
 圖表數值必須來自固定 predictions 與正式 evaluation CSV，不可從圖片手動抄錄。

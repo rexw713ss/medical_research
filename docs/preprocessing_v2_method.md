@@ -1,6 +1,13 @@
 # Preprocessing v2 方法紀錄
 
-更新日期：2026-06-28
+更新日期：2026-07-10
+
+## 成人 cohort
+
+- 納入條件固定為 ICU 入住時 `age >= 18`。
+- MIMIC-IV 年齡計算為 `anchor_age + ICU admission year - anchor_year`；原始 ICU cohort 最小年齡即為 18，因此排除 0 位未成年病人。
+- eICU 將 `> 89` 編碼為 90 後套用相同門檻；原 preprocessing 已排除 437 位未成年病人、530 個 stays。
+- 成人條件重建的 `patient_split.csv` 與原檔 byte-identical，split assignment 差異為 0；完整證據見 `outputs/manuscript_tables_figures_6h/adult_eligibility_audit.json`。
 
 ## 時間對齊與補值
 
@@ -37,6 +44,7 @@
 - `model_hourly_features_v3.csv`：8,275,274 rows，並包含 explicit temporal FNN 所需的 missingness 與 time-since channels。
 - `sofa_scores_hourly_quality.json`：component completeness 與 outcome prevalence。
 - `model_hourly_features_v3_quality.json`：各特徵覆蓋率、最小值、最大值與 outcome prevalence。
+- `outputs/manuscript_tables_figures_6h/table_2_feature_missingness.csv`：LOCF 前 current-hour raw missingness，分 MIMIC train/validation/test 與 eICU 回報。
 
 正式 outcome prevalence：
 

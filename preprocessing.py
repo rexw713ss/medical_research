@@ -21,6 +21,7 @@ import pandas as pd
 from clinical_data_quality import fahrenheit_to_celsius, filter_long_frame
 from project_config import (
     DEFAULT_OBSERVATION_WINDOWS,
+    MINIMUM_ADULT_AGE,
     MIMIC_DATA_DIR,
     PRIMARY_HOURLY_FEATURES,
     SOFA_HOURLY_CSV,
@@ -170,6 +171,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--chunksize", type=int, default=1_000_000, help="CSV chunk size.")
     parser.add_argument("--windows", nargs="*", type=int, default=list(DEFAULT_OBSERVATION_WINDOWS))
     parser.add_argument("--max-stays", type=int, default=None, help="Optional small-run limit.")
+    parser.add_argument(
+        "--min-age",
+        type=int,
+        default=MINIMUM_ADULT_AGE,
+        help="Minimum age at ICU admission; defaults to the adult threshold of 18 years.",
+    )
     parser.add_argument(
         "--no-temporal-features",
         action="store_true",
@@ -451,15 +458,30 @@ def write_quality_report(
     df: pd.DataFrame,
     feature_cols: list[str],
     output_path: Path,
+    cohort_audit: dict[str, object] | None = None,
 ) -> Path:
     """輸出重建後的覆蓋率與數值範圍，供論文資料品質表使用。"""
     feature_report = {}
     for col in feature_cols:
         values = pd.to_numeric(df[col], errors="coerce")
         observed = int(values.notna().sum())
+        missing_col = f"{col}_is_missing"
+        raw_missing = (
+            pd.to_numeric(df[missing_col], errors="coerce")
+            if missing_col in df.columns
+            else pd.Series(np.nan, index=df.index)
+        )
+        raw_count = int(raw_missing.notna().sum())
+        raw_missing_rows = int(raw_missing.sum()) if raw_count else None
         feature_report[col] = {
             "observed_rows": observed,
             "observed_fraction": observed / max(len(df), 1),
+            "available_after_locf_rows": observed,
+            "available_after_locf_fraction": observed / max(len(df), 1),
+            "raw_current_hour_missing_rows": raw_missing_rows,
+            "raw_current_hour_missing_fraction": (
+                raw_missing_rows / raw_count if raw_count and raw_missing_rows is not None else None
+            ),
             "minimum": float(values.min()) if observed else None,
             "maximum": float(values.max()) if observed else None,
         }
@@ -479,6 +501,8 @@ def write_quality_report(
             {
                 "rows": len(df),
                 "stays": int(df["stay_id"].nunique()),
+                "patients": int(df["subject_id"].nunique()),
+                "adult_cohort": cohort_audit or {},
                 "features": feature_report,
                 "labels": label_report,
             },
@@ -532,7 +556,8 @@ def main() -> None:
     sofa_path = Path(args.sofa_path)
     output_path = Path(args.output)
 
-    stays = load_icu_stays(dataset_dir, args.max_stays)
+    stays = load_icu_stays(dataset_dir, args.max_stays, min_age=args.min_age)
+    cohort_audit = dict(stays.attrs.get("cohort_audit", {}))
     print(f"Loaded {len(stays):,} ICU stays.")
 
     # 先建立每個 ICU stay 的逐小時時間軸，後續所有事件都對齊到這個 grid。
@@ -574,7 +599,12 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False, encoding="utf-8-sig")
-    quality_path = write_quality_report(df, feature_cols, output_path)
+    quality_path = write_quality_report(
+        df,
+        feature_cols,
+        output_path,
+        cohort_audit=cohort_audit,
+    )
     manifest_path = write_feature_manifest(output_path, feature_cols, args.windows)
     print(f"Wrote {output_path}")
     print(f"Quality report: {quality_path}")

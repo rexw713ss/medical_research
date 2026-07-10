@@ -15,12 +15,55 @@ from typing import Any, Iterable
 import numpy as np
 import pandas as pd
 
-from project_config import MIMIC_DATA_DIR, PATIENT_SPLIT_CSV, SOFA_HOURLY_CSV
+from project_config import (
+    MINIMUM_ADULT_AGE,
+    MIMIC_DATA_DIR,
+    PATIENT_SPLIT_CSV,
+    SOFA_HOURLY_CSV,
+)
 
 
 SPLIT_NAMES = ("train", "validation", "test")
 HORIZONS = (6, 12, 24)
 TARGET_COLUMNS = tuple(f"label_sofa_increase_ge2_{h}h" for h in HORIZONS)
+
+
+def load_adult_stays_for_split(icustays_csv: Path, min_age: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Apply only the adult exclusion while preserving all source ICU subjects."""
+    stays = pd.read_csv(
+        icustays_csv,
+        usecols=["subject_id", "stay_id", "intime"],
+        parse_dates=["intime"],
+    )
+    source_stays = len(stays)
+    source_patients = int(stays["subject_id"].nunique())
+    patients = pd.read_csv(
+        icustays_csv.parent / "patients.csv.gz",
+        usecols=["subject_id", "anchor_age", "anchor_year"],
+    )
+    stays = stays.merge(patients, on="subject_id", how="left", validate="many_to_one")
+    stays["age"] = (
+        pd.to_numeric(stays["anchor_age"], errors="coerce")
+        + stays["intime"].dt.year
+        - pd.to_numeric(stays["anchor_year"], errors="coerce")
+    )
+    known_age = stays["age"].notna()
+    adult = known_age & stays["age"].ge(min_age)
+    audit = {
+        "minimum_age_years": int(min_age),
+        "age_definition": "anchor_age + ICU admission year - anchor_year",
+        "source_icu_stays": source_stays,
+        "source_patients": source_patients,
+        "excluded_missing_age_stays": int((~known_age).sum()),
+        "excluded_age_below_minimum_stays": int((known_age & ~adult).sum()),
+        "excluded_age_below_minimum_patients": int(
+            stays.loc[known_age & ~adult, "subject_id"].nunique()
+        ),
+    }
+    stays = stays.loc[adult, ["subject_id", "stay_id"]].copy()
+    audit["eligible_adult_icu_stays"] = int(len(stays))
+    audit["eligible_adult_patients"] = int(stays["subject_id"].nunique())
+    return stays, audit
 
 
 def read_patient_split(path: str | Path = PATIENT_SPLIT_CSV) -> pd.DataFrame:
@@ -215,6 +258,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="建立固定 patient-level 資料切分。")
     parser.add_argument("--sofa-csv", default=SOFA_HOURLY_CSV)
     parser.add_argument("--icustays-csv", default=f"{MIMIC_DATA_DIR}/icustays.csv.gz")
+    parser.add_argument("--min-age", type=int, default=MINIMUM_ADULT_AGE)
     parser.add_argument("--output", default=PATIENT_SPLIT_CSV)
     parser.add_argument("--train-frac", type=float, default=0.70)
     parser.add_argument("--val-frac", type=float, default=0.15)
@@ -235,7 +279,7 @@ def main() -> None:
 
     print(f"聚合 patient-level outcomes: {sofa_csv}")
     outcomes = aggregate_patient_outcomes(sofa_csv, args.chunk_size)
-    stays = pd.read_csv(icustays_csv, usecols=["subject_id", "stay_id"])
+    stays, adult_cohort = load_adult_stays_for_split(icustays_csv, args.min_age)
     stay_counts = (
         stays.groupby("subject_id", as_index=False)["stay_id"]
         .nunique()
@@ -275,6 +319,7 @@ def main() -> None:
         },
         "source_sofa_csv": str(sofa_csv),
         "source_icustays_csv": str(icustays_csv),
+        "adult_cohort": adult_cohort,
         "checks": {
             "one_row_per_subject": bool(not patients["subject_id"].duplicated().any()),
             "all_patients_assigned": bool(patients["split"].isin(SPLIT_NAMES).all()),

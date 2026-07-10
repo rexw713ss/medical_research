@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from clinical_data_quality import filter_long_frame, filter_plausible
-from project_config import MIMIC_DATA_DIR, SOFA_HOURLY_CSV
+from project_config import MINIMUM_ADULT_AGE, MIMIC_DATA_DIR, SOFA_HOURLY_CSV
 
 
 # chartevents 中可用於 SOFA 的 itemid。
@@ -163,18 +163,64 @@ def parse_args() -> argparse.Namespace:
         metavar="1-6",
         help="Minimum observed SOFA components required for primary labels.",
     )
+    parser.add_argument(
+        "--min-age",
+        type=int,
+        default=MINIMUM_ADULT_AGE,
+        help="Minimum age at ICU admission; primary analyses use age >= 18 years.",
+    )
     return parser.parse_args()
 
 
-def load_icu_stays(dataset_dir: Path, max_stays: int | None) -> pd.DataFrame:
-    """讀取 ICU stay 清單，並計算每個 stay 的最後一個可用小時。"""
+def load_icu_stays(
+    dataset_dir: Path,
+    max_stays: int | None,
+    min_age: int = MINIMUM_ADULT_AGE,
+) -> pd.DataFrame:
+    """讀取成人 ICU stays，並計算入住年齡與最後一個可用小時。"""
     path = dataset_dir / "icustays.csv.gz"
     stays = pd.read_csv(
         path,
         usecols=["subject_id", "hadm_id", "stay_id", "intime", "outtime"],
         parse_dates=["intime", "outtime"],
     )
-    stays = stays.dropna(subset=["intime", "outtime"]).copy()
+    source_stays = len(stays)
+    source_patients = int(stays["subject_id"].nunique())
+
+    patients = pd.read_csv(
+        dataset_dir / "patients.csv.gz",
+        usecols=["subject_id", "gender", "anchor_age", "anchor_year"],
+    )
+    stays = stays.merge(patients, on="subject_id", how="left", validate="many_to_one")
+    stays["age"] = (
+        pd.to_numeric(stays["anchor_age"], errors="coerce")
+        + stays["intime"].dt.year
+        - pd.to_numeric(stays["anchor_year"], errors="coerce")
+    )
+
+    admissions_path = dataset_dir / "admissions.csv.gz"
+    if admissions_path.exists():
+        admissions = pd.read_csv(admissions_path, usecols=["hadm_id", "race"])
+        stays = stays.merge(admissions, on="hadm_id", how="left", validate="many_to_one")
+    else:
+        stays["race"] = pd.NA
+
+    valid_time = stays["intime"].notna() & stays["outtime"].notna()
+    known_age = stays["age"].notna()
+    adult = known_age & (stays["age"] >= min_age)
+    cohort_audit = {
+        "minimum_age_years": int(min_age),
+        "age_definition": "anchor_age + ICU admission year - anchor_year",
+        "source_icu_stays": int(source_stays),
+        "source_patients": source_patients,
+        "excluded_missing_or_invalid_icu_time_stays": int((~valid_time).sum()),
+        "excluded_missing_age_stays": int((valid_time & ~known_age).sum()),
+        "excluded_age_below_minimum_stays": int((valid_time & known_age & ~adult).sum()),
+        "excluded_age_below_minimum_patients": int(
+            stays.loc[valid_time & known_age & ~adult, "subject_id"].nunique()
+        ),
+    }
+    stays = stays.loc[valid_time & adult].copy()
     stays = stays.sort_values(["subject_id", "hadm_id", "intime"])
     if max_stays is not None:
         # 小樣本測試用；正式分析時不要指定 max_stays。
@@ -189,7 +235,13 @@ def load_icu_stays(dataset_dir: Path, max_stays: int | None) -> pd.DataFrame:
     for col in ["subject_id", "hadm_id", "stay_id"]:
         stays[col] = stays[col].astype("int64")
 
-    return stays.reset_index(drop=True)
+    stays["age"] = stays["age"].astype("float32")
+    stays = stays.drop(columns=["anchor_age", "anchor_year"], errors="ignore")
+    cohort_audit["eligible_adult_icu_stays"] = int(len(stays))
+    cohort_audit["eligible_adult_patients"] = int(stays["subject_id"].nunique())
+    stays = stays.reset_index(drop=True)
+    stays.attrs["cohort_audit"] = cohort_audit
+    return stays
 
 
 def build_hourly_grid(stays: pd.DataFrame) -> pd.DataFrame:
@@ -199,7 +251,9 @@ def build_hourly_grid(stays: pd.DataFrame) -> pd.DataFrame:
     hour_start = np.repeat(np.cumsum(counts) - counts, counts)
     sofa_hour = np.arange(counts.sum(), dtype=np.int64) - hour_start
 
-    grid = stays.iloc[row_index][["subject_id", "hadm_id", "stay_id", "intime", "outtime"]]
+    columns = ["subject_id", "hadm_id", "stay_id", "intime", "outtime"]
+    columns.extend(col for col in ["age", "gender", "race"] if col in stays.columns)
+    grid = stays.iloc[row_index][columns]
     grid = grid.reset_index(drop=True)
     grid["sofa_hour"] = sofa_hour
     grid["sofa_time"] = grid["intime"] + pd.to_timedelta(grid["sofa_hour"], unit="h")
@@ -817,6 +871,7 @@ def write_sofa_quality_report(
     df: pd.DataFrame,
     output_path: Path,
     minimum_components: int,
+    cohort_audit: dict[str, object] | None = None,
 ) -> Path:
     """輸出 component completeness 與各 horizon 標籤盛行率。"""
     component_counts = {
@@ -837,6 +892,8 @@ def write_sofa_quality_report(
             {
                 "rows": len(df),
                 "stays": int(df["stay_id"].nunique()),
+                "patients": int(df["subject_id"].nunique()),
+                "adult_cohort": cohort_audit or {},
                 "minimum_components_for_primary_label": minimum_components,
                 "component_count_distribution": component_counts,
                 "labels": labels,
@@ -855,7 +912,8 @@ def main() -> None:
     dataset_dir = Path(args.dataset_dir)
     output_path = Path(args.output)
 
-    stays = load_icu_stays(dataset_dir, args.max_stays)
+    stays = load_icu_stays(dataset_dir, args.max_stays, min_age=args.min_age)
+    cohort_audit = dict(stays.attrs.get("cohort_audit", {}))
     print(f"Loaded {len(stays):,} ICU stays.")
 
     # 先建立逐小時 grid，再把各來源資料 merge 到同一張表。
@@ -887,7 +945,12 @@ def main() -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False, encoding="utf-8-sig")
-    quality_path = write_sofa_quality_report(df, output_path, args.min_components)
+    quality_path = write_sofa_quality_report(
+        df,
+        output_path,
+        args.min_components,
+        cohort_audit=cohort_audit,
+    )
     print(f"Wrote {output_path}")
     print(f"Quality report: {quality_path}")
 

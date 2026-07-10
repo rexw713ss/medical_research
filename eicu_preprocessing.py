@@ -93,12 +93,26 @@ def load_stays(dataset_dir: Path, min_age: int, max_stays: int | None) -> pd.Dat
         "unitdischargestatus",
     ]
     stays = pd.read_csv(dataset_dir / "patient.csv.gz", usecols=columns, low_memory=False)
+    source_stays = len(stays)
+    source_patients = int(stays["uniquepid"].nunique())
     stays["age_numeric"] = pd.to_numeric(stays["age"].replace("> 89", "90"), errors="coerce")
     stays["unitdischargeoffset"] = pd.to_numeric(stays["unitdischargeoffset"], errors="coerce")
+    known_age = stays["age_numeric"].notna()
+    valid_duration = stays["unitdischargeoffset"].notna() & stays["unitdischargeoffset"].ge(0)
+    adult = known_age & stays["age_numeric"].ge(min_age)
+    cohort_audit = {
+        "minimum_age_years": int(min_age),
+        "source_icu_stays": int(source_stays),
+        "source_patients": source_patients,
+        "excluded_missing_age_stays": int((~known_age).sum()),
+        "excluded_age_below_minimum_stays": int((known_age & ~adult).sum()),
+        "excluded_age_below_minimum_patients": int(
+            stays.loc[known_age & ~adult, "uniquepid"].nunique()
+        ),
+        "excluded_missing_or_invalid_duration_stays": int((~valid_duration).sum()),
+    }
     stays = stays[
-        (stays["age_numeric"] >= min_age)
-        & stays["unitdischargeoffset"].notna()
-        & (stays["unitdischargeoffset"] >= 0)
+        adult & valid_duration
     ].copy()
     stays = stays.sort_values("patientunitstayid", kind="mergesort")
     if max_stays is not None:
@@ -114,7 +128,11 @@ def load_stays(dataset_dir: Path, min_age: int, max_stays: int | None) -> pd.Dat
     stays["end_hour"] = np.floor(stays["unitdischargeoffset"] / 60.0).astype("int32")
     stays["stay_id"] = stays["stay_id"].astype("int64")
     stays["hadm_id"] = stays["hadm_id"].astype("int64")
-    return stays.reset_index(drop=True)
+    cohort_audit["eligible_adult_icu_stays"] = int(len(stays))
+    cohort_audit["eligible_adult_patients"] = int(stays["subject_id"].nunique())
+    stays = stays.reset_index(drop=True)
+    stays.attrs["cohort_audit"] = cohort_audit
+    return stays
 
 
 def build_hourly_grid(stays: pd.DataFrame) -> pd.DataFrame:
@@ -677,6 +695,7 @@ def quality_report(
     extraction_stats: dict[str, Any],
     output_dir: Path,
     horizons: list[int],
+    cohort_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     features = {}
     for feature in MODEL_FEATURES:
@@ -702,6 +721,7 @@ def quality_report(
         "stays": int(frame["stay_id"].nunique()),
         "patients": int(frame["subject_id"].nunique()),
         "hospitals": int(frame["hospital_id"].nunique()),
+        "adult_cohort": cohort_audit or {},
         "features": features,
         "sofa_component_count": {
             str(int(key)): int(value)
@@ -731,6 +751,7 @@ def main() -> None:
         return
 
     stays = load_stays(dataset_dir, args.min_age, args.max_stays)
+    cohort_audit = dict(stays.attrs.get("cohort_audit", {}))
     print(f"Eligible adult ICU stays: {len(stays):,}")
     stay_ids = set(stays["stay_id"].tolist())
     stay_end_minutes = stays.set_index("stay_id")["unitdischargeoffset"]
@@ -829,7 +850,7 @@ def main() -> None:
             ]
         )
     frame = frame[keep_columns]
-    report = quality_report(frame, stats, output_dir, horizons)
+    report = quality_report(frame, stats, output_dir, horizons, cohort_audit=cohort_audit)
     frame.to_pickle(final_pickle)
     if args.write_csv:
         print(f"Writing portable CSV: {final_csv}")

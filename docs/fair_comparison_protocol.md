@@ -1,10 +1,11 @@
 # 公平模型比較 Protocol
 
-更新日期：2026-06-28
+更新日期：2026-07-10
 
 ## 固定條件
 
 - Patient split：所有模型使用 `patient_split.csv` 的 70%/15%/15% 分組。
+- Eligibility：MIMIC-IV 與 eICU 均固定為 ICU 入住時 `age >= 18`；成人條件重建後 MIMIC patient split 與原檔完全相同。
 - Window key：以 `stay_id + sofa_hour` 唯一識別一個 prediction target。
 - Lookback：所有正式比較只納入至少具有 24 小時歷史的 target windows。
 - Primary outcome：未來 6 小時 `SOFA increase >= 2`。

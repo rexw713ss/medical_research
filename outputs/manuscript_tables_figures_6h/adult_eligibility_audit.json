@@ -1,0 +1,39 @@
+{
+  "eligibility": "age >= 18 years at ICU admission",
+  "mimic_iv": {
+    "minimum_age_years": 18,
+    "age_definition": "anchor_age + ICU admission year - anchor_year",
+    "source_icu_stays": 94458,
+    "source_patients": 65366,
+    "excluded_missing_or_invalid_icu_time_stays": 14,
+    "excluded_missing_age_stays": 0,
+    "excluded_age_below_minimum_stays": 0,
+    "excluded_age_below_minimum_patients": 0,
+    "eligible_adult_icu_stays": 94444,
+    "eligible_adult_patients": 65355
+  },
+  "eicu_crd": {
+    "minimum_age_years": 18,
+    "source_icu_stays": 200859,
+    "source_patients": 139367,
+    "excluded_missing_age_stays": 95,
+    "excluded_age_below_minimum_stays": 530,
+    "excluded_age_below_minimum_patients": 437,
+    "excluded_missing_or_invalid_duration_stays": 2,
+    "eligible_adult_icu_stays": 200232,
+    "eligible_adult_patients": 138868
+  },
+  "modeling_impact": {
+    "mimic_underage_stays_removed": 0,
+    "mimic_cohort_changed": false,
+    "eicu_filter_was_already_active": true,
+    "predictors_changed": false,
+    "outcome_changed": false
+  },
+  "patient_split_rebuild": {
+    "current_sha256": "821272fca0bc092caf6ee81a0c3f832b914e7a04d8e8f8c6bceaf6e249a16620",
+    "adult_filtered_rebuild_sha256": "821272fca0bc092caf6ee81a0c3f832b914e7a04d8e8f8c6bceaf6e249a16620",
+    "byte_identical": true,
+    "split_assignment_differences": 0
+  }
+}
