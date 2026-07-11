@@ -37,6 +37,24 @@ SOURCES = {
         "test": Path("outputs/fair_comparison_6h_equal_sample/blackbox_6h/sequence_raw/gru/test_predictions.csv.gz"),
         "raw_column": "y_prob",
     },
+    "xgboost_matched": {
+        "validation": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched_summary/xgboost/val_predictions.csv.gz"),
+        "test": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched_summary/xgboost/test_predictions.csv.gz"),
+        "raw_column": "y_prob",
+        "feature_set": "matched_24h_summary",
+    },
+    "lightgbm_matched": {
+        "validation": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched_summary/lightgbm/val_predictions.csv.gz"),
+        "test": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched_summary/lightgbm/test_predictions.csv.gz"),
+        "raw_column": "y_prob",
+        "feature_set": "matched_24h_summary",
+    },
+    "gru_matched": {
+        "validation": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched/gru/val_predictions.csv.gz"),
+        "test": Path("outputs/feature_matched_baselines_6h_equal_sample/sequence_matched/gru/test_predictions.csv.gz"),
+        "raw_column": "y_prob",
+        "feature_set": "matched_24h_sequence",
+    },
 }
 
 
@@ -71,7 +89,10 @@ def main() -> None:
             output["y_true"] = pd.to_numeric(output["y_true"], errors="raise").astype("int8")
             output["y_prob"] = pd.to_numeric(output["y_prob"], errors="raise").astype("float64")
             output["model"] = model
-            output["feature_set"] = "explicit_temporal" if model == "explicit_kg_tfnn" else "comparator"
+            output["feature_set"] = config.get(
+                "feature_set",
+                "explicit_temporal" if model == "explicit_kg_tfnn" else "comparator",
+            )
             output["target_col"] = TARGET
             output["evaluation_split"] = "validation" if split == "validation" else "test"
             output = output.sort_values(["subject_id", "stay_id", "sofa_hour"]).reset_index(drop=True)

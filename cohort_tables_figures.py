@@ -433,9 +433,10 @@ def performance_table() -> pd.DataFrame:
 
 def ablation_table() -> pd.DataFrame:
     source = pd.read_csv("outputs/fnn_ablation_6h_equal_sample/ablation_publication_table.csv")
+    source = source.rename(columns={"Rule Concordance": "Guideline-Direction Alignment"})
     columns = [
         "Model", "AUROC", "AUPRC", "Brier", "ECE",
-        "Rule Concordance", "Rule Stability", "Rule Drift", "Seeds",
+        "Guideline-Direction Alignment", "Rule Stability", "Rule Drift", "Seeds",
     ]
     return source[[column for column in columns if column in source]]
 
@@ -443,14 +444,18 @@ def ablation_table() -> pd.DataFrame:
 def rule_table() -> pd.DataFrame:
     complexity = pd.read_csv("outputs/rule_evaluation_6h/top_k_rule_complexity.csv")
     stability = pd.read_csv("outputs/rule_evaluation_6h/five_seed_rule_stability.csv")
-    concordance = pd.read_csv("outputs/rule_evaluation_6h/clinical_alignment_rubric.csv")
+    alignment = pd.read_csv("outputs/rule_evaluation_6h/guideline_direction_alignment_rubric.csv")
     drift = pd.read_csv("outputs/rule_evaluation_6h/membership_parameter_drift.csv")
     activated = pd.read_csv("outputs/rule_evaluation_6h/activated_rule_summary.csv")
     median_drift = float(drift["center_shift_in_initial_sigma"].median())
     rows = [
         ["Rule Complexity", "Top-10 mean antecedents", float(complexity["antecedent_count"].mean())],
         ["Rule Stability", "Five-seed pairwise Top-10 Jaccard", float(stability["jaccard"].mean())],
-        ["Rule Concordance", "Guideline-based clinical alignment", float(concordance["clinical_alignment_score"].mean())],
+        [
+            "Guideline-Direction Alignment",
+            "Prespecified guideline-weight direction agreement",
+            float(alignment["guideline_direction_alignment_score"].mean()),
+        ],
         ["Rule Drift", "Median center shift, initial sigmas", float(median_drift)],
     ]
     for _, row in activated.iterrows():
@@ -474,23 +479,31 @@ def figure_cohort_flow(audit: dict[str, Any], protocol: dict[str, Any], external
         for row in protocol["full_cohort"]
         if row["target_col"] == "label_sofa_increase_ge2_6h"
     }
+    denominator_path = Path("outputs/expanded_experiment_reporting_6h/mimic_analytic_denominators.csv")
+    analytic = {}
+    if denominator_path.exists():
+        denominator = pd.read_csv(denominator_path)
+        analytic = {row.analysis_set: row for row in denominator.itertuples(index=False)}
+    mimic_analytic_patients = sum(int(row.patients) for row in analytic.values()) if analytic else 48_773
+    mimic_analytic_stays = sum(int(row.stays) for row in analytic.values()) if analytic else 65_978
     left = [
         f"MIMIC-IV ICU source\n{mimic['source_patients']:,} patients; {mimic['source_icu_stays']:,} stays",
-        f"Adult eligibility: age >= 18\n0 underage stays excluded",
-        f"Valid-duration adult cohort\n{mimic['eligible_adult_patients']:,} patients; {mimic['eligible_adult_icu_stays']:,} stays",
-        f"Eligible 24-hour model windows\n{sum(row['windows'] for row in full.values()):,} windows",
+        "Excluded before hourly alignment\n14 invalid-time stays; 0 underage stays",
+        f"Adult hourly cohort\n{mimic['eligible_adult_patients']:,} patients; {mimic['eligible_adult_icu_stays']:,} stays\n8,275,274 stay-hours",
+        "Outcome/history exclusions\n1,337,152 invalid 6-h outcome hours\n1,444,310 insufficient-history hours",
+        f"Final analytic cohort\n{mimic_analytic_patients:,} patients; {mimic_analytic_stays:,} stays\n{sum(row['windows'] for row in full.values()):,} windows",
         "Patient-level split\n"
         + "\n".join(
-            f"{name.title()}: {row['windows']:,} windows"
+            f"{name.title()}: {int(analytic[name].patients):,} patients; {row['windows']:,} windows"
             for name, row in full.items()
         ),
     ]
     right = [
         f"eICU-CRD ICU source\n{eicu['source_patients']:,} patients; {eicu['source_icu_stays']:,} stays",
-        f"Adult eligibility: age >= 18\n{eicu['excluded_age_below_minimum_stays']:,} underage stays excluded",
-        f"Harmonized adult cohort\n{eicu['eligible_adult_patients']:,} patients; {eicu['eligible_adult_icu_stays']:,} stays",
-        f"Complete 24-hour external windows\n{external['windows']:,} windows",
-        f"Frozen external test\n{external['patients']:,} patients; {external['stays']:,} stays\n{external['hospitals']:,} hospitals",
+        "Excluded before hourly alignment\n95 missing-age; 530 underage; 2 invalid-duration stays",
+        f"Harmonized adult cohort\n{eicu['eligible_adult_patients']:,} patients; {eicu['eligible_adult_icu_stays']:,} stays\n12,994,585 stay-hours",
+        "Outcome/history exclusions\n5,173,532 invalid 6-h outcome hours\n1,605,163 insufficient-history hours",
+        f"Frozen external test\n{external['patients']:,} patients; {external['stays']:,} stays\n{external['windows']:,} windows; {external['hospitals']:,} hospitals",
     ]
 
     def draw_column(items: list[str], x: float, color: str) -> None:
@@ -533,11 +546,11 @@ def figure_architecture(output_dir: Path) -> None:
         (0.42, "Guideline-guided\nfuzzification", "#E1F2E8"),
         (0.59, "Additive and cross-feature\nfuzzy rule inference", "#F5E4EF"),
         (0.76, "Explicit temporal features\n+ temporal attention", "#FFF2CC"),
-        (0.93, "Deterioration probability\n+ IF-THEN explanations", "#E8E8E8"),
+        (0.925, "Deterioration probability\n+ IF-THEN explanations", "#E8E8E8"),
     ]
     for index, (x, label, color) in enumerate(nodes):
         box = FancyBboxPatch(
-            (x - 0.068, 0.39), 0.136, 0.22,
+            (x - 0.064, 0.39), 0.128, 0.22,
             boxstyle="round,pad=0.008,rounding_size=0.008",
             facecolor=color, edgecolor="#333333", linewidth=1.1,
         )
@@ -546,7 +559,7 @@ def figure_architecture(output_dir: Path) -> None:
         if index < len(nodes) - 1:
             ax.add_patch(
                 FancyArrowPatch(
-                    (x + 0.071, 0.50), (nodes[index + 1][0] - 0.071, 0.50),
+                    (x + 0.066, 0.50), (nodes[index + 1][0] - 0.066, 0.50),
                     arrowstyle="-|>", mutation_scale=13, color="#444444", linewidth=1.2,
                 )
             )
@@ -684,7 +697,7 @@ def write_outputs(output_dir: Path, tables: dict[str, pd.DataFrame], audit: dict
         "",
         manuscript_markdown(tables["table_5_rule_evaluation"]),
         "",
-        "Clinical concordance is alignment with a predefined guideline-based rubric, not independent clinician adjudication.",
+        "Guideline-direction alignment is a model-internal prior-direction diagnostic, not clinician adjudication.",
         "",
         "## Figures 2-5",
         "",

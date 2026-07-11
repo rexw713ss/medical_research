@@ -202,6 +202,7 @@ class TemporalFNNOutput:
     hourly_risk_scores: torch.Tensor
     feature_risks: torch.Tensor
     rule_activations: torch.Tensor
+    raw_rule_firing: torch.Tensor
     memberships: dict[str, torch.Tensor]
     explicit_temporal_features: torch.Tensor | None = None
     explicit_temporal_contributions: torch.Tensor | None = None
@@ -330,6 +331,7 @@ class ExpertGuidedStaticFNN(nn.Module):
             rule_activations = rule_firing / (rule_firing.sum(dim=1, keepdim=True) + 1e-8)
             cross_rule_score = torch.sum(rule_activations * self.cross_rule_weights, dim=1)
         else:
+            rule_firing = torch.empty(batch_size, 0, device=x_t.device)
             rule_activations = torch.empty(batch_size, 0, device=x_t.device)
             cross_rule_score = torch.zeros(batch_size, device=x_t.device)
 
@@ -339,6 +341,7 @@ class ExpertGuidedStaticFNN(nn.Module):
             "static_risk_score": static_risk_score,
             "feature_risks": feature_risks,
             "rule_activations": rule_activations,
+            "raw_rule_firing": rule_firing,
             "memberships": memberships,
         }
 
@@ -546,6 +549,11 @@ class TemporalAttentionFNN(nn.Module):
             seq_length,
             -1,
         )
+        raw_rule_firing = static_out["raw_rule_firing"].reshape(
+            batch_size,
+            seq_length,
+            -1,
+        )
         memberships = {
             feat: values.reshape(batch_size, seq_length, values.shape[-1])
             for feat, values in static_out["memberships"].items()
@@ -580,6 +588,7 @@ class TemporalAttentionFNN(nn.Module):
             hourly_risk_scores=hourly_risk_scores,
             feature_risks=feature_risks,
             rule_activations=rule_activations,
+            raw_rule_firing=raw_rule_firing,
             memberships=memberships,
             explicit_temporal_features=explicit_features,
             explicit_temporal_contributions=explicit_contributions,

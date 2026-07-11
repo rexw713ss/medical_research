@@ -7,11 +7,12 @@
 - Test windows: 830,839
 - Overall deterioration rate: 5.69%
 - Rule weight: model-derived weight normalized to the largest candidate rule.
-- Clinical concordance: fraction of static, temporal and cross-rule directions aligned with guideline priors.
+- Guideline-direction alignment: fraction of static, temporal and cross-rule weight directions aligned with prespecified guideline priors.
+- This model-internal diagnostic is not clinician validation.
 
 ## Main-Text Cross-Feature Examples
 
-| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Clinical concordance |
+| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Guideline-direction alignment |
 |---:|---|---:|---:|---:|---:|
 | 1 | IF GCS IS altered AND SpO2 IS low AND GCS-related fuzzy risk increased over the 24-hour window THEN deterioration risk IS high | 1.000 | n=393 | 15.0% | 1.00 |
 | 2 | IF creatinine IS high AND platelet count IS low AND bilirubin IS high AND creatinine-related fuzzy risk increased over the 24-hour window THEN deterioration risk IS high | 0.643 | n=781 | 10.9% | 1.00 |
@@ -22,7 +23,7 @@ Cross-feature antecedents use fuzzy membership >= 0.35; single-feature rules use
 
 ## Overall Top Model-Supported Rules
 
-| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Clinical concordance |
+| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Guideline-direction alignment |
 |---:|---|---:|---:|---:|---:|
 | 1 | IF FiO2 requirement IS supplemental o2 AND FiO2 requirement measurements were frequently abnormal THEN deterioration risk IS high | 0.535 | n=529,833 | 6.3% | 1.00 |
 | 2 | IF platelet count IS low AND platelet count abnormality persisted across the observation window THEN deterioration risk IS high | 0.399 | n=72,960 | 6.4% | 1.00 |

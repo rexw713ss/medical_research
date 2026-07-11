@@ -7,17 +7,17 @@ All variants use the same patient split, 200,000 training windows, 50,000 valida
 
 | Model | AUROC, mean +/- SD | AUPRC, mean +/- SD | Brier, mean +/- SD | ECE, mean +/- SD |
 |---|---:|---:|---:|---:|
-| Full Knowledge-Guided Temporal FNN | 0.6448 +/- nan | 0.1236 +/- nan | 0.0523 +/- nan | 0.0013 +/- nan |
-| KG-TFNN without missingness channels | 0.6037 +/- nan | 0.0875 +/- nan | 0.0532 +/- nan | 0.0011 +/- nan |
-| Missingness-only temporal FNN | 0.5949 +/- nan | 0.0902 +/- nan | 0.0532 +/- nan | 0.0019 +/- nan |
+| Full Knowledge-Guided Temporal FNN | 0.6456 +/- 0.0012 | 0.1230 +/- 0.0006 | 0.0523 +/- 0.0000 | 0.0012 +/- 0.0001 |
+| KG-TFNN without missingness channels | 0.6035 +/- 0.0003 | 0.0877 +/- 0.0004 | 0.0532 +/- 0.0000 | 0.0011 +/- 0.0000 |
+| Missingness-only temporal FNN | 0.5953 +/- 0.0003 | 0.0903 +/- 0.0001 | 0.0532 +/- 0.0000 | 0.0019 +/- 0.0001 |
 
-## Three-Seed Ensemble
+## 3-Seed Ensemble
 
 | Model | AUROC | AUPRC | Brier | ECE |
 |---|---:|---:|---:|---:|
-| Full Knowledge-Guided Temporal FNN | 0.6448 | 0.1236 | 0.0523 | 0.0013 |
-| KG-TFNN without missingness channels | 0.6037 | 0.0875 | 0.0532 | 0.0011 |
-| Missingness-only temporal FNN | 0.5949 | 0.0902 | 0.0532 | 0.0019 |
+| Full Knowledge-Guided Temporal FNN | 0.6475 | 0.1244 | 0.0523 | 0.0014 |
+| KG-TFNN without missingness channels | 0.6042 | 0.0879 | 0.0532 | 0.0011 |
+| Missingness-only temporal FNN | 0.5954 | 0.0904 | 0.0532 | 0.0019 |
 
 ## Paired Patient-Clustered Bootstrap
 
@@ -25,14 +25,14 @@ Difference is full KG-TFNN minus the comparator; 95% CIs are percentile interval
 
 | Comparator | Metric | Mean difference | 95% CI | P value |
 |---|---|---:|---:|---:|
-| KG-TFNN without missingness channels | AUROC | 0.0417 | 0.0389 to 0.0459 | 0.0000 |
-| KG-TFNN without missingness channels | AUPRC | 0.0364 | 0.0344 to 0.0402 | 0.0000 |
-| KG-TFNN without missingness channels | BRIER | -0.0009 | -0.0010 to -0.0009 | 0.0000 |
-| KG-TFNN without missingness channels | ECE | 0.0003 | -0.0001 to 0.0011 | 0.4000 |
-| Missingness-only temporal FNN | AUROC | 0.0496 | 0.0467 to 0.0523 | 0.0000 |
-| Missingness-only temporal FNN | AUPRC | 0.0340 | 0.0308 to 0.0380 | 0.0000 |
-| Missingness-only temporal FNN | BRIER | -0.0009 | -0.0010 to -0.0008 | 0.0000 |
-| Missingness-only temporal FNN | ECE | -0.0004 | -0.0010 to 0.0004 | 0.4000 |
+| KG-TFNN without missingness channels | AUROC | 0.0435 | 0.0391 to 0.0478 | <0.002 |
+| KG-TFNN without missingness channels | AUPRC | 0.0366 | 0.0322 to 0.0410 | <0.002 |
+| KG-TFNN without missingness channels | BRIER | -0.0009 | -0.0011 to -0.0008 | <0.002 |
+| KG-TFNN without missingness channels | ECE | 0.0003 | -0.0005 to 0.0009 | 0.3700 |
+| Missingness-only temporal FNN | AUROC | 0.0518 | 0.0458 to 0.0576 | <0.002 |
+| Missingness-only temporal FNN | AUPRC | 0.0339 | 0.0291 to 0.0390 | <0.002 |
+| Missingness-only temporal FNN | BRIER | -0.0009 | -0.0010 to -0.0008 | <0.002 |
+| Missingness-only temporal FNN | ECE | -0.0005 | -0.0013 to 0.0003 | 0.2520 |
 
 ## Audit
 

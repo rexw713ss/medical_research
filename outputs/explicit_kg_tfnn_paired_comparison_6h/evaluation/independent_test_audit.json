@@ -1,6 +1,6 @@
 {
   "status": "passed",
   "patient_split": "patient_split.csv",
-  "models": 5,
+  "models": 8,
   "errors": []
 }

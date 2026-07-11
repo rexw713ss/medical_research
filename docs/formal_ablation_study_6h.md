@@ -14,7 +14,7 @@
 
 數值為三個 random seeds 的 mean +/- SD。Rule Stability 為 Top-10 規則在三組 seed pair 的平均 Jaccard similarity；Rule Drift 為相對初始化尺度正規化後的參數 RMSE。
 
-| 模型 | AUROC | AUPRC | Brier | ECE | Rule Concordance | Rule Stability | Rule Drift |
+| 模型 | AUROC | AUPRC | Brier | ECE | Guideline-Direction Alignment | Rule Stability | Rule Drift |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Randomly initialized FNN | 0.6395 +/- 0.0008 | 0.1183 +/- 0.0024 | 0.05244 +/- 0.00006 | 0.00117 +/- 0.00012 | 0.496 +/- 0.127 | 0.207 | 0.165 +/- 0.010 |
 | Guideline-guided FNN without temporal features | 0.5949 +/- 0.0004 | 0.0837 +/- 0.0006 | 0.05330 +/- 0.00001 | 0.00121 +/- 0.00007 | 0.647 +/- 0.021 | 0.818 | 0.245 +/- 0.003 |
@@ -29,11 +29,11 @@
 | Temporal feature design | +0.0510 | +0.0457 to +0.0563 | 0.0006 | 為最主要的效能來源。 |
 | Clinical consistency regularization | -0.0003 | -0.0019 to +0.0013 | 0.530 | 未改善 AUROC；AUPRC 差異亦近乎為零。 |
 
-Consistency regularization 沒有改善預測效能或 Rule Concordance，但 Rule Stability 由 0.587 提升至 0.674。這只能解讀為規則重現性可能改善，不能宣稱它提升整體預測表現。若投稿篇幅有限，可將 consistency loss 定位為 interpretability regularizer，並把其權重敏感度分析放入 supplement。
+Consistency regularization 沒有改善預測效能或 Guideline-Direction Alignment，但 Rule Stability 由 0.587 提升至 0.674。這只能解讀為規則重現性可能改善，不能宣稱它提升整體預測表現。若投稿篇幅有限，可將 consistency loss 定位為 interpretability regularizer，並把其權重敏感度分析放入 supplement。
 
 ## 指標定義
 
-- **Rule Concordance**：訓練後 static fuzzy risk 與 frozen NEWS2/SOFA-guided reference risk 在 validation windows 上的 Spearman correlation。
+- **Guideline-Direction Alignment**：訓練後 static fuzzy risk 與 frozen NEWS2/SOFA-guided reference risk 在 validation windows 上的 Spearman correlation；這是 model-internal prior-alignment diagnostic，不是 clinician validation。
 - **Rule Stability**：不同 seeds 的 Top-10 feature/cross-rule importance 集合之 pairwise Jaccard similarity。
 - **Rule Drift**：membership centers、sigmas、feature-rule weights 與 cross-rule weights，相對各自初始化 RMS 尺度的平均 normalized RMSE。
 

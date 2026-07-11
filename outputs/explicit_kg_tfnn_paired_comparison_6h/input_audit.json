@@ -100,6 +100,66 @@
         "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
         "probability_source": "y_prob"
       }
+    },
+    "xgboost_matched": {
+      "validation": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\xgboost\\val_predictions.csv.gz",
+        "source_sha256": "7d2a74d3eff84352076713ff3a35d379963ca4292ff9f0d39c2479889b4fa5e4",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\xgboost\\test_predictions.csv.gz",
+        "source_sha256": "4b93720452361270b3bb748c6da377ef82c99775a1be86b520cd5beca623b78c",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    },
+    "lightgbm_matched": {
+      "validation": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\lightgbm\\val_predictions.csv.gz",
+        "source_sha256": "ba42c96a40261387ac121270ebbb36f294e4491c1d71fa8565bf9217ebabbf40",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\lightgbm\\test_predictions.csv.gz",
+        "source_sha256": "329dfde1211e13c954df5b5a3e30bf9be534d2818673a44b75be658ebeff446e",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
+    },
+    "gru_matched": {
+      "validation": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched\\gru\\val_predictions.csv.gz",
+        "source_sha256": "7bc18660c9006aabb778bab88a0c61e81b34e39a0759fb9ed30744107c83c8d8",
+        "rows": 50000,
+        "patients": 5796,
+        "positive": 2906,
+        "key_outcome_sha256": "aa63f3a472dd9b559af3db0f5c99ac5668e601f9f8beceb5e4504150e4d4b1cf",
+        "probability_source": "y_prob"
+      },
+      "test": {
+        "source": "outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched\\gru\\test_predictions.csv.gz",
+        "source_sha256": "c9e7f51f51a51dc8bb6aba76c9ddd77be1c6042d53da28dce811cb3627a328e9",
+        "rows": 830839,
+        "patients": 7287,
+        "positive": 47292,
+        "key_outcome_sha256": "4baadf4469a49c0b2e9d8ea2769d1ed493c9834c14483a59f47cf8455e55a6e0",
+        "probability_source": "y_prob"
+      }
     }
   },
   "test_windows_outcomes_identical": true

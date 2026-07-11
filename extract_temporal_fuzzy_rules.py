@@ -75,7 +75,7 @@ class CandidateRule:
     temporal_signal: str
     cross_rule_index: int | None
     raw_weight: float
-    clinical_concordance: float
+    guideline_direction_alignment: float
     support: int = 0
     positives: int = 0
 
@@ -124,7 +124,7 @@ def initial_term_weight(model: TemporalAttentionFNN, feature: str, term: str) ->
     return float(values[index].detach().cpu().item())
 
 
-def candidate_concordance(
+def candidate_guideline_direction_alignment(
     model: TemporalAttentionFNN,
     antecedents: tuple[tuple[str, str], ...],
     temporal_feature: str,
@@ -206,7 +206,7 @@ def build_candidates(model: TemporalAttentionFNN) -> list[CandidateRule]:
                     temporal_signal=signal,
                     cross_rule_index=None,
                     raw_weight=candidate_weight(model, antecedents, feature, signal, None),
-                    clinical_concordance=candidate_concordance(
+                    guideline_direction_alignment=candidate_guideline_direction_alignment(
                         model, antecedents, feature, signal, None
                     ),
                 )
@@ -238,7 +238,7 @@ def build_candidates(model: TemporalAttentionFNN) -> list[CandidateRule]:
                     signal,
                     rule_index,
                 ),
-                clinical_concordance=candidate_concordance(
+                guideline_direction_alignment=candidate_guideline_direction_alignment(
                     model,
                     antecedents,
                     temporal_feature,
@@ -322,7 +322,7 @@ def extract_rules(
                 "positive": candidate.positives,
                 "positive_rate": positive_rate,
                 "positive_rate_lift": positive_rate / prevalence if candidate.support else math.nan,
-                "clinical_concordance": candidate.clinical_concordance,
+                "guideline_direction_alignment": candidate.guideline_direction_alignment,
                 "ranking_score": normalized_weight * math.sqrt(support_fraction),
                 "temporal_feature": candidate.temporal_feature,
                 "temporal_signal": candidate.temporal_signal,
@@ -363,18 +363,19 @@ def write_markdown(
         f"- Test windows: {test_windows:,}",
         f"- Overall deterioration rate: {prevalence:.2%}",
         "- Rule weight: model-derived weight normalized to the largest candidate rule.",
-        "- Clinical concordance: fraction of static, temporal and cross-rule directions aligned with guideline priors.",
+        "- Guideline-direction alignment: fraction of static, temporal and cross-rule weight directions aligned with prespecified guideline priors.",
+        "- This model-internal diagnostic is not clinician validation.",
         "",
         "## Main-Text Cross-Feature Examples",
         "",
-        "| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Clinical concordance |",
+        "| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Guideline-direction alignment |",
         "|---:|---|---:|---:|---:|---:|",
     ]
     for rank, (_, row) in enumerate(cross_rules.iterrows(), start=1):
         lines.append(
             f"| {rank} | {row['extracted_temporal_fuzzy_rule']} | "
             f"{row['rule_weight']:.3f} | n={int(row['support']):,} | "
-            f"{row['positive_rate']:.1%} | {row['clinical_concordance']:.2f} |"
+            f"{row['positive_rate']:.1%} | {row['guideline_direction_alignment']:.2f} |"
         )
     lines.extend(
         [
@@ -383,7 +384,7 @@ def write_markdown(
             "",
             "## Overall Top Model-Supported Rules",
             "",
-        "| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Clinical concordance |",
+        "| Rank | Extracted temporal fuzzy rule | Rule weight | Support | Positive rate | Guideline-direction alignment |",
         "|---:|---|---:|---:|---:|---:|",
         ]
     )
@@ -391,7 +392,7 @@ def write_markdown(
         lines.append(
             f"| {int(row['rank'])} | {row['extracted_temporal_fuzzy_rule']} | "
             f"{row['rule_weight']:.3f} | n={int(row['support']):,} | "
-            f"{row['positive_rate']:.1%} | {row['clinical_concordance']:.2f} |"
+            f"{row['positive_rate']:.1%} | {row['guideline_direction_alignment']:.2f} |"
         )
     lines.extend(
         [

@@ -1,7 +1,9 @@
 {
   "status": "passed",
   "seeds": [
-    42
+    42,
+    52,
+    62
   ],
   "protocol_sha256": "47629531beb32b3d2022e37471835ca592d7779197b7fe3696ee1cc8fc3ad184",
   "validation_windows": 50000,

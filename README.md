@@ -27,7 +27,11 @@
 | SOFA outcome sensitivity 與 event-level alarm burden | 完成；500 次 clustered bootstrap | `outputs/clinical_sensitivity_analyses_6h/` |
 | Age/sex/ethnicity/ICU type/current SOFA subgroup | 完成 | `outputs/clinical_sensitivity_analyses_6h/` |
 | eICU hospital-clustered sensitivity | 完成；205 hospitals、500 次 hospital bootstrap | `outputs/eicu_hospital_sensitivity_6h/` |
-| Missingness-only / no-missingness ablation | 正式 3-seed training 執行中 | `outputs/missingness_ablation_6h_equal_sample/` |
+| Missingness-only / no-missingness ablation | 完成；3-seed ensemble + 1,000 patient-cluster bootstrap | `outputs/missingness_ablation_6h_equal_sample/evaluation/` |
+| Feature-matched GRU / XGBoost / LightGBM | 完成；相同 39 hourly channels、相同 test windows | `outputs/feature_matched_baselines_6h_equal_sample/` |
+| Raw rule firing 與 activation-threshold sensitivity | 完成；0.01–0.50、current/attention-selected hour | `outputs/raw_rule_firing_6h/` |
+| Cohort denominator、SOFA harmonization、raw/calibrated reporting | 完成 | `outputs/expanded_experiment_reporting_6h/` |
+| 投稿底稿實驗與數學審查 | 完成第一輪修訂；7 tables、5 figures、pseudocode、training details | `paper/TSP_template.tex`, `paper/TSP_template_review.pdf` |
 | TRIPOD+AI 與 PROBAST+AI project checklist | 完成；投稿頁碼待最終排版 | `docs/TRIPOD_AI_checklist.md`, `docs/PROBAST_AI_checklist.md` |
 | Reproducibility manifest | 完成；環境與關鍵檔案 SHA-256 | `outputs/reproducibility_6h/analysis_manifest.json` |
 
@@ -62,6 +66,9 @@
 | Outcome、alarm burden 與 MIMIC subgroup sensitivity | `clinical_sensitivity_analyses.py` |
 | Missingness ablation 與 clustered summary | `ablation_fnn_experiments.py`, `summarize_missingness_ablation.py` |
 | eICU hospital-clustered sensitivity | `eicu_hospital_sensitivity.py` |
+| Feature-matched sequence/tree baselines | `blackbox_baselines.py` |
+| Raw cross-rule firing analysis | `raw_rule_firing_analysis.py` |
+| Expanded manuscript reporting audit | `expanded_experiment_reporting.py` |
 | Reproducibility manifest | `reproducibility_manifest.py` |
 | 一次性 frozen final test evaluation | `final_test_evaluation.py` |
 | 論文圖表 | `paper_figures.py` |
@@ -130,6 +137,8 @@ Hospital-clustered sensitivity 的 AUROC 95% CI 為 0.6127–0.6326，AUPRC 95% 
 - MIMIC 6 h baseline report：`docs/mimic_iv_6h_evaluation_report.md`
 - Clinical sensitivity analyses：`outputs/clinical_sensitivity_analyses_6h/clinical_sensitivity_report.md`
 - eICU hospital sensitivity：`outputs/eicu_hospital_sensitivity_6h/eicu_hospital_sensitivity_report.md`
+- Cohort/SOFA/calibration/alarm/site definitions：`outputs/expanded_experiment_reporting_6h/expanded_experiment_reporting.md`
+- Raw rule firing sensitivity：`outputs/raw_rule_firing_6h/raw_rule_firing_report.md`
 - TRIPOD+AI checklist：`docs/TRIPOD_AI_checklist.md`
 - PROBAST+AI self-assessment：`docs/PROBAST_AI_checklist.md`
 - 輸出索引：`outputs/README.md`
@@ -202,9 +211,9 @@ MIMIC-IV 原始資料中，只有下列 7 張表進入 cohort、predictor 或 SO
 | Hourly feature/SOFA table | 65,355 | 8,275,274 stay-hours | `model_hourly_features_v3.csv` |
 | 有效 6 h SOFA labels | - | 6,938,122 stay-hours | Event prevalence 6.46% |
 | 24 h history eligible model cohort | - | 5,493,812 windows | Train、validation、test 合計 |
-| Train | 45,746 | 3,843,400 windows | 217,650 positives；5.66% |
-| Validation | 9,807 | 819,573 windows | 47,638 positives；5.81% |
-| Internal test | 9,802 | 830,839 windows | 47,292 positives；5.69% |
+| Train analytic cohort | 34,185 | 46,214 stays；3,843,400 windows | 217,650 positives；5.66% |
+| Validation analytic cohort | 7,301 | 9,870 stays；819,573 windows | 47,638 positives；5.81% |
+| Internal test analytic cohort | 7,287 | 9,894 stays；830,839 windows | 47,292 positives；5.69% |
 | Final-model test evaluation | 7,287 | 830,839 windows | 僅計算具有完整 eligible windows 的 test patients |
 
 `patient_split.csv` 本身包含 45,757/9,807/9,802 位 train/validation/test subjects；Table 1 的 train 為 45,746 位，是因為另排除沒有有效 ICU 時間軸的 subjects。Adult-filtered split 重建與原 manifest byte-identical，assignment 差異為 0。
@@ -296,12 +305,13 @@ Table 2 的 missingness 是 LOCF 前的 current-hour raw missingness，不是 fo
 | Clinical scores | NEWS2、SOFA |
 | Interpretable baselines | Logistic Regression、Decision Tree、GAM、EBM |
 | Black-box baselines | Random Forest、XGBoost、LightGBM、LSTM、GRU |
+| Feature-matched baselines | GRU 使用 24 x 39 channels；XGBoost/LightGBM 使用同源 143 summaries |
 | Proposed model | Full Knowledge-Guided Temporal FNN |
 | Ablation | Random initialization、static guideline FNN、temporal without consistency、full model |
 | Sensitivity | 4/6/12/24 h observation windows |
 | Outcome/clinical utility | SOFA-definition sensitivity、event-level alarm burden、lead time、decision curve |
 | Robustness/fairness | Missingness ablation、MIMIC subgroups、eICU hospital-clustered sensitivity |
-| Interpretability | Rule extraction、complexity、stability、concordance、drift、activated rules、TP/FP/FN timelines |
+| Interpretability | Rule extraction、complexity、stability、guideline-direction alignment、raw firing、drift、TP/FP/FN timelines |
 | Validation | MIMIC independent test、eICU frozen external validation |
 
 ### 12. 主要結果底稿
@@ -316,8 +326,11 @@ Table 2 的 missingness 是 LOCF 前的 current-hour raw missingness，不是 fo
 - MIMIC 95% specificity threshold：sensitivity 0.1755、PPV 0.1767、NPV 0.9503。
 - 相同 thresholds 套用 eICU 後，observed specificity 降至 79.0% 與 88.2%，表示 operating point 具有 transportability gap。
 - Ablation 顯示 temporal design 是主要效能來源，paired AUROC difference +0.0510；clinical consistency loss 未提升 AUROC。
-- Rule evaluation：Top-10 mean antecedents 1.44、five-seed Jaccard 0.720、guideline-rubric concordance 1.000、median membership-center drift 0.264 initial sigmas。
-- 新版 equal-sample explicit KG-TFNN AUROC 0.6448、AUPRC 0.1236；相較 GRU 的 paired 差分為 +0.0210（95% CI 0.0152–0.0267）與 +0.0199（0.0151–0.0248）。
+- Rule evaluation：Top-10 mean antecedents 1.44、five-seed Jaccard 0.720、guideline-direction alignment 1.000、median membership-center drift 0.264 initial sigmas。
+- Feature-matched GRU AUROC 0.6587、AUPRC 0.1272；KG-TFNN paired 差分為 -0.0139（95% CI -0.0192 至 -0.0088）與 -0.0036（-0.0085 至 0.0008）。
+- Feature-matched LightGBM AUROC 0.6904、AUPRC 0.1710；XGBoost AUROC 0.6870、AUPRC 0.1665。這些結果不支持 architecture-superiority claim，論文定位改為 predictive performance 與 intrinsic interpretability 的取捨。
+- Guideline-direction alignment 僅衡量模型規則是否沿預先指定 NEWS2/SOFA 方向，不是 clinician-validated interpretability。
+- Raw product-t-norm firing threshold 0.10 時，negative/positive windows 的 current-hour 平均 activated cross-rules 為 0.529/0.569；Top-5 排名在 threshold 0.01–0.20 間不變。
 
 ### 13. 論文表圖配置
 
@@ -347,7 +360,7 @@ Knowledge-Guided Temporal FNN 使用 NEWS2/SOFA-guided membership initialization
 ### 15. 撰寫時必須保留的限制
 
 - Full-cohort FNN 與 equal-sample baselines 的訓練樣本數不同，不能直接宣稱 full-cohort FNN 優於所有 baselines。
-- Clinical concordance 1.000 是與預先定義 guideline rubric 的一致性，不是獨立臨床專家盲審。
+- Guideline-direction alignment 1.000 是與預先定義 NEWS2/SOFA 方向的一致性，不是獨立臨床專家盲審或 clinician validation。
 - Consistency regularization 未改善 AUROC；目前只能定位為可能提升規則穩定性的 interpretability regularizer。
 - Positive 與 negative windows 的平均 activated rule 數接近，解釋時需同時考慮 rule type、activation strength、weight 與時間軸，而非只看規則數量。
 - eICU calibration 與 fixed-specificity thresholds 明顯衰退，部署前需要 local validation；primary external result不可用 eICU recalibration 修飾。

@@ -682,7 +682,12 @@ def save_figures(
 
     plot_risk = risk.copy()
     plot_risk["model"] = plot_risk["model"].map(display_model_name)
-    pivot = plot_risk.pivot(index="model", columns="risk_group", values="event_rate")
+    pivot = plot_risk.pivot_table(
+        index="model",
+        columns="risk_group",
+        values="event_rate",
+        aggfunc="mean",
+    )
     pivot = pivot.reindex(columns=["low", "medium", "high"])
     ax = pivot.plot(kind="bar", figsize=(13, 6), color=["#4E79A7", "#F28E2B", "#E15759"])
     ax.set(ylabel="Observed event rate", title="Validation-defined risk strata on test set")

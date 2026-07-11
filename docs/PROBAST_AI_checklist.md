@@ -15,7 +15,7 @@ Judgements use **Low**, **Some concerns**, or **High**. These are transparent wo
 | Outcome | Some concerns | Some concerns | The primary label is future 6-hour SOFA increase >=2 with a minimum four observed components; assume-normal and six-component complete-case sensitivity analyses are available | Emphasize that this is a derived surrogate outcome and discuss component missingness and treatment effects |
 | Analysis | Low | Low | Large event count; patient-level train/validation/test split; validation-only tuning/calibration; frozen test; subject-clustered CIs; paired comparison; external validation; reproducibility manifest | Preserve one-time test lock and publish the manifest with the code release |
 | Model performance and evaluation | Low | Some concerns | Discrimination, calibration, fixed-specificity sensitivity, DCA, alarm burden, lead time, subgroup performance, and eICU hospital-clustered sensitivity are reported | Avoid presenting window-level sensitivity as event-level clinical utility |
-| Explainability and human factors | Some concerns | Some concerns | Actual supported rules, stability, concordance, drift, activation counts, and TP/FP/FN cases are evaluated | Clinical rubric scoring is investigator-defined; obtain independent clinician review if feasible |
+| Explainability and human factors | Some concerns | Some concerns | Actual supported rules, stability, guideline-direction alignment, drift, raw activation, and TP/FP/FN cases are evaluated | Direction scoring is investigator-defined; obtain independent clinician review if feasible |
 | Fairness | Some concerns | Some concerns | Age, sex, ethnicity, ICU type, and current-SOFA subgroup estimates with clustered CIs are available | Small and heterogeneous groups limit conclusions; do not infer absence of inequity from overlapping CIs |
 | External transportability | Low | Some concerns | Frozen MIMIC checkpoint is applied to 205 eICU hospitals without retraining or recalibration; hospital-clustered CIs and site heterogeneity are reported | Discuss degraded calibration and specificity transport as deployment limitations |
 
@@ -38,16 +38,16 @@ Judgements use **Low**, **Some concerns**, or **High**. These are transparent wo
 | Were calibration and clinically relevant operating points reported? | Yes | Brier, ECE, calibration curve, intercept/slope, 90%/95% specificity |
 | Was clinical utility assessed beyond window-level metrics? | Yes | DCA, lead time, event detection, alert and false-alert burden |
 | Was external validation performed without local model fitting? | Yes | Frozen eICU transport; no retraining/recalibration |
-| Were model explanations evaluated empirically? | Yes | Rule complexity, stability, concordance, drift, activation, case studies |
+| Were model explanations evaluated empirically? | Yes | Rule complexity, stability, guideline-direction alignment, drift, raw activation, case studies |
 
 ## Overall Judgement
 
-**Overall risk of bias: Some concerns.** The analysis design is strong for retrospective EHR model development, but the outcome is a derived SOFA surrogate with incomplete components and the clinical rule-concordance rubric is investigator-defined.
+**Overall risk of bias: Some concerns.** The analysis design is strong for retrospective EHR model development, but the outcome is a derived SOFA surrogate with incomplete components and the guideline-direction alignment rubric is investigator-defined.
 
 **Overall applicability: Some concerns.** The model targets adult ICU stay-hour risk stratification, but transportability varies across eICU hospitals and fixed MIMIC operating thresholds generate materially different external specificity. The manuscript should not frame the model as ready for autonomous bedside deployment.
 
 ## Priority Mitigations
 
 1. Add a labeled Discussion section covering retrospective selection, derived outcome, alarm burden, subgroup uncertainty, and external calibration shift.
-2. Obtain an independent clinician review of the rule-concordance rubric and representative case timelines if feasible.
+2. Obtain an independent clinician review of the extracted rules and representative case timelines if feasible; do not describe the current guideline-direction rubric as clinician validation.
 3. Archive the frozen split, comparison protocol, package environment, configurations, and checkpoint hashes with the submitted code release.

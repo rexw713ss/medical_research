@@ -1,0 +1,8 @@
+{
+  "primary_outcome": "future 6-hour SOFA increase >=2",
+  "observation_window_hours": 24,
+  "patient_split": "subject_id",
+  "reporting_only": true,
+  "model_refit": false,
+  "external_recalibration": false
+}

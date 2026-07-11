@@ -6,10 +6,10 @@
 |---|---:|
 | Rule Complexity | Top-10 mean antecedents = 1.44 |
 | Rule Stability | 5-seed mean pairwise Top-10 Jaccard = 0.720 |
-| Rule Concordance | Mean rule-based clinical alignment = 1.000 |
+| Guideline-Direction Alignment | Mean prespecified direction alignment = 1.000 |
 | Rule Drift | Median center shift = 0.264 initial sigmas (mean 1.421) |
 
-Five-seed complexity/stability uses the fixed equal-sample training protocol (200,000 train and 50,000 validation windows per seed). Concordance, membership drift, activated rules and case studies use the frozen full-cohort final model.
+Five-seed complexity/stability uses the fixed equal-sample training protocol (200,000 train and 50,000 validation windows per seed). Direction alignment, membership drift, activated rules and case studies use the frozen full-cohort final model.
 
 ## Rule Complexity And Stability
 
@@ -28,7 +28,7 @@ Five seeds produced 10 pairwise comparisons. Values below use the same Top-10 ru
 | 62 vs 82 | 0.667 |
 | 72 vs 82 | 0.667 |
 
-## Clinical Alignment Rubric
+## Guideline-Direction Alignment Rubric
 
 Each rule receives one point for guideline-consistent static direction and one for a clinically worsening/persistent temporal direction. Cross-feature rules additionally require a predefined clinical rule combination. NA criteria are excluded from the denominator.
 

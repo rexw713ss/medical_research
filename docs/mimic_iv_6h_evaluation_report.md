@@ -1,5 +1,7 @@
 # MIMIC-IV Primary 6-Hour Evaluation
 
+> **Superseded comparator note (2026-07-11):** This report contains the earlier non-feature-matched pipeline comparison. The current primary comparator analysis is in `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/` and includes feature-matched GRU, XGBoost, and LightGBM. Under matched information, KG-TFNN did not outperform these models; architecture-superiority claims must not use the older contrasts below.
+
 ## Evaluation Design
 
 - Outcome: SOFA increase >=2 within the next 6 hours.

@@ -23,6 +23,9 @@ FILES = [
     "advanced_model_evaluation.py",
     "clinical_sensitivity_analyses.py",
     "eicu_hospital_sensitivity.py",
+    "blackbox_baselines.py",
+    "raw_rule_firing_analysis.py",
+    "expanded_experiment_reporting.py",
     "outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt",
     "outputs/explicit_temporal_fnn_tuning_6h/best_params.json",
     "outputs/final_test_evaluation_6h/FINAL_TEST_LOCK.json",
@@ -30,6 +33,9 @@ FILES = [
     "outputs/clinical_sensitivity_analyses_6h/analysis_config.json",
     "outputs/eicu_hospital_sensitivity_6h/analysis_config.json",
     "outputs/missingness_ablation_6h_equal_sample/ablation_config.json",
+    "outputs/feature_matched_baselines_6h_equal_sample/experiment_config.json",
+    "outputs/raw_rule_firing_6h/analysis_config.json",
+    "outputs/expanded_experiment_reporting_6h/reporting_config.json",
 ]
 PACKAGES = [
     "numpy",

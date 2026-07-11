@@ -78,7 +78,7 @@ Equal-sample comparisons and the full-cohort frozen model are distinct analyses 
 
 ## Table 4. Ablation study
 
-| Model | AUROC | AUPRC | Brier | ECE | Rule Concordance | Rule Stability | Rule Drift | Seeds |
+| Model | AUROC | AUPRC | Brier | ECE | Guideline-Direction Alignment | Rule Stability | Rule Drift | Seeds |
 |---|---|---|---|---|---|---|---|---|
 | Randomly initialized FNN | 0.6395 | 0.1183 | 0.0524 | 0.0012 | 0.4959 | 0.207 | 0.1653 | 42,52,62 |
 | Guideline-guided FNN without temporal features | 0.5949 | 0.0837 | 0.0533 | 0.0012 | 0.6473 | 0.8182 | 0.2448 | 42,52,62 |
@@ -91,12 +91,12 @@ Equal-sample comparisons and the full-cohort frozen model are distinct analyses 
 |---|---|---|
 | Rule Complexity | Top-10 mean antecedents | 1.44 |
 | Rule Stability | Five-seed pairwise Top-10 Jaccard | 0.72 |
-| Rule Concordance | Guideline-based clinical alignment | 1.0 |
+| Guideline-Direction Alignment | Prespecified NEWS2/SOFA direction alignment | 1.0 |
 | Rule Drift | Median center shift, initial sigmas | 0.264 |
 | Activated Rules | Mean activated rules: Negative windows | 1.819 |
 | Activated Rules | Mean activated rules: Positive windows | 1.833 |
 
-Clinical concordance is alignment with a predefined guideline-based rubric, not independent clinician adjudication.
+Guideline-direction alignment is an investigator-defined model diagnostic, not independent clinician adjudication or clinician-validated interpretability.
 
 ## Figures 2-5
 

@@ -1,0 +1,17 @@
+{
+  "run_dir": "outputs\\explicit_temporal_fnn_formal_6h\\seed_42",
+  "checkpoint_sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688",
+  "thresholds": [
+    0.01,
+    0.025,
+    0.05,
+    0.1,
+    0.2,
+    0.35,
+    0.5
+  ],
+  "reference_threshold": 0.1,
+  "top_k": 5,
+  "windows": 830839,
+  "raw_firing_definition": "product t-norm before normalization across cross-rules"
+}

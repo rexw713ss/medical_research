@@ -195,13 +195,18 @@ def save_membership_figure(model: TemporalAttentionFNN, output_dir: Path) -> Non
     plt.close(fig)
 
 
-def clinical_rubric(rules: pd.DataFrame, top_k: int) -> pd.DataFrame:
+def guideline_direction_rubric(rules: pd.DataFrame, top_k: int) -> pd.DataFrame:
     cross = rules[rules["rule_id"].astype(str).str.startswith("cross::")].head(3)
     frame = pd.concat([rules.head(max(top_k - len(cross), 1)), cross], ignore_index=True)
     frame = frame.drop_duplicates("rule_id").head(top_k).copy()
     frame["rank"] = np.arange(1, len(frame) + 1)
+    source_column = (
+        "guideline_direction_alignment"
+        if "guideline_direction_alignment" in frame.columns
+        else "clinical_concordance"
+    )
     frame["static_direction_alignment"] = (
-        pd.to_numeric(frame["clinical_concordance"], errors="coerce") > 0
+        pd.to_numeric(frame[source_column], errors="coerce") > 0
     ).astype(float)
     frame["temporal_direction_alignment"] = frame["temporal_signal"].isin(
         [
@@ -217,7 +222,7 @@ def clinical_rubric(rules: pd.DataFrame, top_k: int) -> pd.DataFrame:
         1.0,
         np.nan,
     )
-    frame["clinical_alignment_score"] = frame[
+    frame["guideline_direction_alignment_score"] = frame[
         [
             "static_direction_alignment",
             "temporal_direction_alignment",
@@ -232,7 +237,7 @@ def clinical_rubric(rules: pd.DataFrame, top_k: int) -> pd.DataFrame:
             "static_direction_alignment",
             "temporal_direction_alignment",
             "cross_rule_alignment",
-            "clinical_alignment_score",
+            "guideline_direction_alignment_score",
         ]
     ]
 
@@ -379,7 +384,7 @@ def write_report(
 ) -> None:
     mean_complexity = complexity["antecedent_count"].mean()
     mean_stability = stability["jaccard"].mean()
-    mean_concordance = rubric["clinical_alignment_score"].mean()
+    mean_alignment = rubric["guideline_direction_alignment_score"].mean()
     lines = [
         "# Rule Evaluation Framework: Experimental Results",
         "",
@@ -389,11 +394,11 @@ def write_report(
         "|---|---:|",
         f"| Rule Complexity | Top-{top_k} mean antecedents = {mean_complexity:.2f} |",
         f"| Rule Stability | 5-seed mean pairwise Top-{top_k} Jaccard = {mean_stability:.3f} |",
-        f"| Rule Concordance | Mean rule-based clinical alignment = {mean_concordance:.3f} |",
+        f"| Guideline-Direction Alignment | Mean prespecified direction alignment = {mean_alignment:.3f} |",
         f"| Rule Drift | Median center shift = {drift['center_shift_in_initial_sigma'].median():.3f} initial sigmas (mean {drift['center_shift_in_initial_sigma'].mean():.3f}) |",
         "",
         "Five-seed complexity/stability uses the fixed equal-sample training protocol (200,000 train and "
-        "50,000 validation windows per seed). Concordance, membership drift, activated rules and case "
+        "50,000 validation windows per seed). Direction alignment, membership drift, activated rules and case "
         "studies use the frozen full-cohort final model.",
         "",
         "## Rule Complexity And Stability",
@@ -408,7 +413,7 @@ def write_report(
     lines.extend(
         [
             "",
-            "## Clinical Alignment Rubric",
+            "## Guideline-Direction Alignment Rubric",
             "",
             "Each rule receives one point for guideline-consistent static direction and one for a clinically "
             "worsening/persistent temporal direction. Cross-feature rules additionally require a predefined "
@@ -423,7 +428,7 @@ def write_report(
         lines.append(
             f"| {int(row['rank'])} | {row['extracted_temporal_fuzzy_rule']} | "
             f"{row['static_direction_alignment']:.0f} | {row['temporal_direction_alignment']:.0f} | "
-            f"{cross} | {row['clinical_alignment_score']:.2f} |"
+            f"{cross} | {row['guideline_direction_alignment_score']:.2f} |"
         )
     lines.extend(
         [
@@ -496,8 +501,8 @@ def main() -> None:
     save_membership_figure(model, output_dir)
 
     temporal_rules = pd.read_csv(args.temporal_rules)
-    rubric = clinical_rubric(temporal_rules, args.top_k)
-    rubric.to_csv(output_dir / "clinical_alignment_rubric.csv", index=False)
+    rubric = guideline_direction_rubric(temporal_rules, args.top_k)
+    rubric.to_csv(output_dir / "guideline_direction_alignment_rubric.csv", index=False)
 
     predictions = pd.read_csv(args.predictions)
     metrics = pd.read_csv(args.advanced_metrics).iloc[0]

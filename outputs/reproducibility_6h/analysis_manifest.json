@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-10T06:17:58.559187+00:00",
+  "generated_utc": "2026-07-11T04:26:31.872171+00:00",
   "study": "Primary 6-hour SOFA increase >=2 KG-TFNN",
   "python": "3.12.12 (main, Feb 12 2026, 00:40:26) [MSC v.1944 64 bit (AMD64)]",
   "platform": "Windows-10-10.0.19045-SP0",
@@ -41,8 +41,8 @@
       "sha256": "f280656f6acf60d616b1ab87d23022e4b22ccf0de27a74662be9c72640d024aa"
     },
     "anfis_model.py": {
-      "bytes": 29746,
-      "sha256": "0ab3752de72dee48d9f34c40faaf161b41153f37e4c61a39e959264b6e587a52"
+      "bytes": 30080,
+      "sha256": "be6c79d5e1a3bb2b5afbe1a00bd4e99a41138a3d398006fefcc5fdd8d8f090aa"
     },
     "train_fnn.py": {
       "bytes": 37193,
@@ -53,16 +53,28 @@
       "sha256": "8ebd9ffe7594395ea9ea9a747d401d64562348416a799e1055e22aae42c55aec"
     },
     "advanced_model_evaluation.py": {
-      "bytes": 37056,
-      "sha256": "835c0a44c1e6e8badc423b4102405eec67045532ac0191b17af01a42199b8d5a"
+      "bytes": 37117,
+      "sha256": "a646fbecbbc7e5683dbd316a3b71d8b49a3bbbeb69115820d4336e1c2d58a963"
     },
     "clinical_sensitivity_analyses.py": {
-      "bytes": 22400,
-      "sha256": "b2f5fab0dfa5bf791860398fc7fe3fdb5dbf1c826c96161104637c5ff23c691e"
+      "bytes": 22610,
+      "sha256": "5b242da0f7450befbbbfa87f5bec3a76a2134710a2a41d36cceb9a929de1558b"
     },
     "eicu_hospital_sensitivity.py": {
       "bytes": 6586,
       "sha256": "4731ab8e9f237a7130209d01db1a84bdb9b34b3545dbb7510575e68814d150ef"
+    },
+    "blackbox_baselines.py": {
+      "bytes": 69258,
+      "sha256": "cf42261dfae185374c173ccad88a3ceba12c7a2b4bf9cc5fa4641e5b85c5279a"
+    },
+    "raw_rule_firing_analysis.py": {
+      "bytes": 15714,
+      "sha256": "5e35a15ca26bb2666f3bc20fea84a86cb1a0953f48a4fb708fc7e8d433421511"
+    },
+    "expanded_experiment_reporting.py": {
+      "bytes": 13833,
+      "sha256": "d2a1fa83a0e1b2513b11623f766d448ed852e6f23d81481d03bd012ffbb2185b"
     },
     "outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt": {
       "bytes": 73951,
@@ -77,8 +89,8 @@
       "sha256": "220ff1e915abd3b71b026addbb4c6ee58481187c7e114b40ef60b844dc2ff803"
     },
     "outputs/explicit_kg_tfnn_paired_comparison_6h/input_audit.json": {
-      "bytes": 4878,
-      "sha256": "d81b6dbfad98c72b8de424b6e0392665a7d37b7c1b210b05640cfc9b71874db4"
+      "bytes": 7799,
+      "sha256": "923a8758eaa30c9432eb54bde6d6af3542de8a51e28e6658a0ff3342531e876d"
     },
     "outputs/clinical_sensitivity_analyses_6h/analysis_config.json": {
       "bytes": 435,
@@ -91,6 +103,18 @@
     "outputs/missingness_ablation_6h_equal_sample/ablation_config.json": {
       "bytes": 3516,
       "sha256": "2d7824c72cd9d85d8b6e4498e6071b2c0e28521bc89cfac61fd3554f8fdf020d"
+    },
+    "outputs/feature_matched_baselines_6h_equal_sample/experiment_config.json": {
+      "bytes": 6973,
+      "sha256": "84fd91696e961e6e07790a571a4a33f902c82fb26fd20173af015f8dee2faff2"
+    },
+    "outputs/raw_rule_firing_6h/analysis_config.json": {
+      "bytes": 415,
+      "sha256": "c2e87771f1daed5276cf1d8a1b03f1f252c55211a5edb0cce4aafe764f5211a0"
+    },
+    "outputs/expanded_experiment_reporting_6h/reporting_config.json": {
+      "bytes": 217,
+      "sha256": "36f99f88812a3fbf9619390481c4ea63edf4d1fe16fc8906ecdaf6d2d04f1575"
     }
   },
   "missing_expected_files": [],

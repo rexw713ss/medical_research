@@ -185,14 +185,43 @@ def build_tabular_feature_sets(columns: list[str], feature_set_arg: str) -> dict
         ),
     )
 
+    measurement_process = [
+        column
+        for feature in FEATURE_ORDER
+        for column in (
+            f"{feature}_is_missing",
+            f"{feature}_time_since_last_measurement_h",
+        )
+        if column in columns
+    ]
+    window_24h = [column for column in temporal_features if "_w24h_" in column]
+
     all_sets = {
         "protocol": static_features,
         "static": static_features,
         "temporal": [*static_features, *temporal_features],
+        "matched24": list(dict.fromkeys([*static_features, *measurement_process, *window_24h])),
     }
     if feature_set_arg == "compare":
         return all_sets
     return {feature_set_arg: all_sets[feature_set_arg]}
+
+
+def build_sequence_features(columns: list[str], mode: str) -> list[str]:
+    """Build raw or feature-matched recurrent-model inputs."""
+    raw = [feature for feature in FEATURE_ORDER if feature in columns]
+    if mode == "raw":
+        return raw
+    if mode != "matched":
+        raise ValueError(f"Unknown sequence feature mode: {mode}")
+
+    missing = [f"{feature}_is_missing" for feature in FEATURE_ORDER]
+    recency = [f"{feature}_time_since_last_measurement_h" for feature in FEATURE_ORDER]
+    expected = [*raw, *missing, *recency]
+    absent = [column for column in expected if column not in columns]
+    if absent:
+        raise ValueError(f"Matched sequence inputs are missing columns: {absent}")
+    return expected
 
 
 def load_baseline_frame(
@@ -525,6 +554,63 @@ def sequence_prediction_metadata(dataset: Dataset) -> pd.DataFrame:
             "sofa_hour": base.time_values[target_indices],
         }
     )
+
+
+def _sequence_dataset_starts(dataset: Dataset) -> tuple[ICUSequenceDataset, np.ndarray]:
+    if isinstance(dataset, Subset):
+        base = dataset.dataset
+        indices = np.asarray(dataset.indices, dtype=np.int64)
+        return base, base.window_starts[indices]
+    return dataset, dataset.window_starts
+
+
+def matched_tree_feature_names(sequence_features: list[str]) -> list[str]:
+    raw = sequence_features[: len(FEATURE_ORDER)]
+    names = [f"current::{column}" for column in sequence_features]
+    for statistic in ("mean", "min", "max", "std", "slope", "short_change", "window_change"):
+        names.extend(f"{statistic}::{feature}" for feature in raw)
+    names.extend(f"missing_fraction::{feature}" for feature in raw)
+    return names
+
+
+def summarize_sequence_for_trees(
+    dataset: Dataset,
+    base_feature_count: int,
+    batch_size: int = 4096,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Convert the same 24x39 hourly input into outcome-agnostic tree summaries."""
+    base, starts = _sequence_dataset_starts(dataset)
+    n_rows = len(starts)
+    output_width = base.features.shape[1] + (8 * base_feature_count)
+    output = np.empty((n_rows, output_width), dtype=np.float32)
+    targets = base.labels[starts + base.seq_length - 1].astype(np.float32, copy=True)
+    offsets = np.arange(base.seq_length, dtype=np.int64)
+    hours = np.arange(base.seq_length, dtype=np.float32)
+    centered_hours = hours - hours.mean()
+    slope_denominator = float(np.sum(centered_hours**2))
+
+    for batch_start in range(0, n_rows, batch_size):
+        batch_end = min(batch_start + batch_size, n_rows)
+        index = starts[batch_start:batch_end, None] + offsets[None, :]
+        sequence = base.features[index]
+        raw = sequence[:, :, :base_feature_count]
+        missing = sequence[:, :, base_feature_count : 2 * base_feature_count]
+        slope = np.einsum("btf,t->bf", raw, centered_hours, optimize=True) / slope_denominator
+        output[batch_start:batch_end] = np.concatenate(
+            [
+                sequence[:, -1, :],
+                raw.mean(axis=1),
+                raw.min(axis=1),
+                raw.max(axis=1),
+                raw.std(axis=1),
+                slope,
+                raw[:, -1, :] - raw[:, -2, :],
+                raw[:, -1, :] - raw[:, 0, :],
+                missing.mean(axis=1),
+            ],
+            axis=1,
+        )
+    return output, targets
 
 
 class RecurrentRiskModel(nn.Module):
@@ -1042,11 +1128,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--allow-incomplete-cohort", action="store_true", help="僅限 smoke test。")
     parser.add_argument(
         "--feature-set",
-        choices=["protocol", "static", "temporal", "compare"],
+        choices=["protocol", "static", "temporal", "matched24", "compare"],
         default="protocol",
         help="Tabular models only: temporal includes rolling mean/min/max/std/slope.",
     )
     parser.add_argument("--models", default="all", help="all or comma list: rf,xgboost,lightgbm,lstm,gru")
+    parser.add_argument(
+        "--sequence-feature-set",
+        choices=["raw", "matched"],
+        default="raw",
+        help="matched uses raw + missingness + time-since channels (39 hourly inputs).",
+    )
     parser.add_argument("--seq-length", type=int, default=24)
     parser.add_argument("--min-history-hours", type=int, default=24)
     parser.add_argument("--val-frac", type=float, default=0.15, help="舊版相容參數；正式比例由 manifest 決定。")
@@ -1109,8 +1201,10 @@ def main() -> None:
         args.target_col,
         args.seq_length,
     )
-    if args.feature_set != "protocol":
+    if args.feature_set not in {"protocol", "matched24"}:
         raise ValueError("正式公平比較固定使用 protocol 的 13 個 predictors。")
+    if args.feature_set == "matched24" and args.sequence_feature_set != "matched":
+        raise ValueError("matched24 tree baselines require --sequence-feature-set matched.")
     if args.min_history_hours != args.seq_length:
         raise ValueError("min-history-hours 必須與 24h comparison window 相同。")
     debug_limits = [
@@ -1140,7 +1234,7 @@ def main() -> None:
 
     columns = read_csv_header(csv_path)
     tabular_feature_sets = build_tabular_feature_sets(columns, args.feature_set)
-    sequence_features = [feature for feature in FEATURE_ORDER if feature in columns]
+    sequence_features = build_sequence_features(columns, args.sequence_feature_set)
 
     all_feature_cols = list(
         dict.fromkeys(
@@ -1247,6 +1341,9 @@ def main() -> None:
     metrics_path = output_dir / "blackbox_metrics.csv"
 
     tabular_models = [model_name for model_name in models_to_run if model_name in TABULAR_MODELS]
+    matched_tree_models = tabular_models if args.feature_set == "matched24" else []
+    if matched_tree_models:
+        tabular_models = []
     if tabular_models:
         sampled_train_df = train_df
         sampled_val_df = val_df
@@ -1364,8 +1461,12 @@ def main() -> None:
                 )
 
     sequence_models = [model_name for model_name in models_to_run if model_name in SEQUENCE_MODELS]
-    if sequence_models:
-        print(f"\n=== Sequence feature set: sequence_raw ({len(sequence_features)} features, {args.seq_length}h) ===")
+    if sequence_models or matched_tree_models:
+        sequence_feature_name = f"sequence_{args.sequence_feature_set}"
+        print(
+            f"\n=== Sequence feature set: {sequence_feature_name} "
+            f"({len(sequence_features)} features, {args.seq_length}h) ==="
+        )
         device = choose_device(args.device)
         print(f"Sequence device: {device}")
 
@@ -1439,9 +1540,105 @@ def main() -> None:
         if len(train_sequence_dataset) == 0 or len(val_sequence_dataset) == 0 or len(test_sequence_dataset) == 0:
             raise ValueError("Sequence train, validation, or test set has no usable windows.")
 
+        if matched_tree_models:
+            feature_set_name = "sequence_matched_summary"
+            feature_names = matched_tree_feature_names(sequence_features)
+            print(f"Building {len(feature_names)} feature-matched tree summaries...")
+            x_train, y_train = summarize_sequence_for_trees(
+                train_sequence_dataset, len(FEATURE_ORDER)
+            )
+            x_val, y_val = summarize_sequence_for_trees(
+                val_sequence_dataset, len(FEATURE_ORDER)
+            )
+            x_test, y_test = summarize_sequence_for_trees(
+                test_sequence_dataset, len(FEATURE_ORDER)
+            )
+            val_metadata = sequence_prediction_metadata(val_sequence_dataset)
+            test_metadata = sequence_prediction_metadata(test_sequence_dataset)
+
+            for model_name in matched_tree_models:
+                print(f"Training feature-matched {model_name}...")
+                model_dir = output_dir / feature_set_name / model_name
+                model_dir.mkdir(parents=True, exist_ok=True)
+                model, train_metrics, val_metrics = train_tabular_model(
+                    model_name=model_name,
+                    deps=deps,
+                    x_train=x_train,
+                    y_train=y_train,
+                    x_val=x_val,
+                    y_val=y_val,
+                    args=args,
+                )
+                save_model(model, model_dir / "model.joblib", deps)
+                save_feature_importance(model, feature_names, model_dir / "feature_importance.csv")
+                val_probs = predict_probabilities(model, x_val)
+                test_probs = predict_probabilities(model, x_test)
+                test_metrics = binary_metrics(y_test, test_probs)
+
+                if args.save_predictions:
+                    for metadata, targets, probabilities, split_name, path in (
+                        (val_metadata, y_val, val_probs, "validation", model_dir / "val_predictions.csv.gz"),
+                        (test_metadata, y_test, test_probs, "test", model_dir / "test_predictions.csv.gz"),
+                    ):
+                        predictions = metadata.copy().assign(
+                            y_true=targets,
+                            y_prob=probabilities,
+                            model=model_name,
+                            feature_set=feature_set_name,
+                            target_col=args.target_col,
+                            horizon_hours=horizon_hours,
+                            evaluation_split=split_name,
+                            comparison_mode=args.comparison_mode,
+                            protocol_sha256=protocol["protocol_sha256"],
+                        )
+                        predictions.to_csv(path, index=False, compression="gzip")
+
+                append_metrics(
+                    metrics_path,
+                    {
+                        "comparison_mode": args.comparison_mode,
+                        "protocol_sha256": protocol["protocol_sha256"],
+                        "target_col": args.target_col,
+                        "horizon_hours": horizon_hours,
+                        "feature_set": feature_set_name,
+                        "model": model_name,
+                        "n_train": len(y_train),
+                        "n_val": len(y_val),
+                        "n_test": len(y_test),
+                        "n_features": len(feature_names),
+                        "train_auroc": train_metrics["auroc"],
+                        "train_auprc": train_metrics["auprc"],
+                        "train_log_loss": train_metrics["log_loss"],
+                        "val_auroc": val_metrics["auroc"],
+                        "val_auprc": val_metrics["auprc"],
+                        "val_accuracy": val_metrics["accuracy"],
+                        "val_precision": val_metrics["precision"],
+                        "val_recall": val_metrics["recall"],
+                        "val_specificity": val_metrics["specificity"],
+                        "val_f1": val_metrics["f1"],
+                        "val_brier": val_metrics["brier"],
+                        "val_log_loss": val_metrics["log_loss"],
+                        "test_auroc": test_metrics["auroc"],
+                        "test_auprc": test_metrics["auprc"],
+                        "test_accuracy": test_metrics["accuracy"],
+                        "test_precision": test_metrics["precision"],
+                        "test_recall": test_metrics["recall"],
+                        "test_specificity": test_metrics["specificity"],
+                        "test_f1": test_metrics["f1"],
+                        "test_brier": test_metrics["brier"],
+                        "test_log_loss": test_metrics["log_loss"],
+                        "fit_seconds": val_metrics["fit_seconds"],
+                    },
+                )
+                print(
+                    f"{model_name} matched | test AUROC {test_metrics['auroc']:.4f} | "
+                    f"AUPRC {test_metrics['auprc']:.4f}"
+                )
+            del x_train, x_val, x_test, y_train, y_val, y_test, val_probs, test_probs, model
+
         for model_name in sequence_models:
             print(f"Training {model_name}...")
-            model_dir = output_dir / "sequence_raw" / model_name
+            model_dir = output_dir / sequence_feature_name / model_name
             model_dir.mkdir(parents=True, exist_ok=True)
             with (model_dir / "sequence_scaling.json").open("w", encoding="utf-8") as f:
                 json.dump(
@@ -1471,7 +1668,7 @@ def main() -> None:
                     "protocol_sha256": protocol["protocol_sha256"],
                     "target_col": args.target_col,
                     "horizon_hours": horizon_hours,
-                    "feature_set": "sequence_raw",
+                    "feature_set": sequence_feature_name,
                     "model": model_name,
                     "n_train": len(train_sequence_dataset),
                     "n_val": len(val_sequence_dataset),
