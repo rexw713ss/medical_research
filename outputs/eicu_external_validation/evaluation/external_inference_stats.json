@@ -1,6 +1,0 @@
-{
-  "prediction_windows": 6215890,
-  "seconds": 101.44716810015962,
-  "windows_per_second": 61272.18843470328,
-  "device": "cuda"
-}

@@ -1,6 +1,6 @@
 # 投稿底稿實驗與數學審查
 
-審查對象：`paper/TSP_template.tex` 與 `paper/TSP_template.pdf`  
+審查對象：`paper/TSP_template.tex` 與最新版 `paper/TSP_template_review.pdf`
 審查版：`paper/TSP_template_review.pdf`  
 更新日期：2026-07-11
 
@@ -18,6 +18,7 @@
 10. **缺少投稿圖**：加入 cohort flow、architecture、ROC/PR、calibration/DCA 與 TP/FP/FN patient timelines，共 5 組圖。
 11. **Discussion 結構不足**：末段改為 Contributions、Limitations、Future Work，並降低 deployment-ready 與 causal interpretation 的語氣。
 12. **引用與編譯問題**：修正 bibliography fields 與 cite keys；審查版 13 筆引用均可解析。
+13. **SOFA/NEWS2 可重建性不足**：新增 Supplementary Table S1 完整 SOFA thresholds、source harmonization 與 aggregation notes，以及 Table S2 NEWS2 Scale 1 到 Gaussian centers/sigmas/weights 的實作對照；另揭露 GCS 無 sedation correction 與 heart-rate 41--50 無獨立 fuzzy term。
 
 ## Feature-Matched Comparator Update
 

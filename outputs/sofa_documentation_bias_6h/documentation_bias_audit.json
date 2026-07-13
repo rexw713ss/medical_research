@@ -1,0 +1,9 @@
+{
+  "primary_positive_windows": 47292,
+  "positive_with_newly_observed_component_at_future_max": 18426,
+  "positive_with_new_component_fraction": 0.38962192336970314,
+  "positive_with_more_observed_components_at_future_max": 18102,
+  "positive_with_more_components_fraction": 0.3827708703374778,
+  "positive_preserved_under_pairwise_common_component_label": 31740,
+  "positive_preserved_under_common_component_fraction": 0.6711494544531845
+}

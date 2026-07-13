@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-11T04:26:31.872171+00:00",
+  "generated_utc": "2026-07-13T06:57:11.714624+00:00",
   "study": "Primary 6-hour SOFA increase >=2 KG-TFNN",
   "python": "3.12.12 (main, Feb 12 2026, 00:40:26) [MSC v.1944 64 bit (AMD64)]",
   "platform": "Windows-10-10.0.19045-SP0",
@@ -76,6 +76,22 @@
       "bytes": 13833,
       "sha256": "d2a1fa83a0e1b2513b11623f766d448ed852e6f23d81481d03bd012ffbb2185b"
     },
+    "posthoc_explainability_comparison.py": {
+      "bytes": 22300,
+      "sha256": "544af5b0238bb50e7a715241d5738d111d961b864f2a2723f905d7b7b68bceab"
+    },
+    "clinical_consistency_regularization_analysis.py": {
+      "bytes": 9758,
+      "sha256": "a58eba3cce3d9940fada1d2bea98ff52b3aa93af9987536c63d3c7cdb926b75b"
+    },
+    "sofa_documentation_bias_analysis.py": {
+      "bytes": 11819,
+      "sha256": "b8ab8e068e44fd3036d1e439bd272664853cce34640b89f95ae5a6f8261eb144"
+    },
+    "build_supplementary_material.py": {
+      "bytes": 36183,
+      "sha256": "da9bac23d91b4308c8791e31223344a206fe1a444a65f99818c547ee88e82286"
+    },
     "outputs/explicit_temporal_fnn_formal_6h/seed_42/best_model.pt": {
       "bytes": 73951,
       "sha256": "158427a5c358016f35b435b1ab5f75c7194a3ff3f9b6c9d68c5190a8a9125688"
@@ -115,6 +131,38 @@
     "outputs/expanded_experiment_reporting_6h/reporting_config.json": {
       "bytes": 217,
       "sha256": "36f99f88812a3fbf9619390481c4ea63edf4d1fe16fc8906ecdaf6d2d04f1575"
+    },
+    "outputs/posthoc_explainability_comparison_6h/analysis_config.json": {
+      "bytes": 313,
+      "sha256": "af1fb050f8be92f1bd7539e3903bae49d267ec157ade500196a893d491f11870"
+    },
+    "outputs/posthoc_explainability_comparison_6h/explanation_quality_comparison.csv": {
+      "bytes": 1513,
+      "sha256": "89c88ba4e472627cbb78822f834a34a9958613cb2c14bb5377cb509e9600f514"
+    },
+    "outputs/clinical_consistency_regularization_6h/analysis_config.json": {
+      "bytes": 407,
+      "sha256": "580ec70150483ec91b2fe1c9983d2e0841b442d200b7f9bfdef07ffa857ab998"
+    },
+    "outputs/clinical_consistency_regularization_6h/consistency_metrics_by_seed.csv": {
+      "bytes": 1829,
+      "sha256": "719e1afc562d5a8919fa06cb06e8e9aaa17d52a9cacaf370999aafd7aa55c37b"
+    },
+    "outputs/sofa_documentation_bias_6h/documentation_bias_audit.json": {
+      "bytes": 449,
+      "sha256": "86ac1fb16b847996fd14532b95ecc081d268ae0955cede2dbb05ef725784f442"
+    },
+    "outputs/sofa_documentation_bias_6h/complete_sofa_outcome_sensitivity.csv": {
+      "bytes": 4016,
+      "sha256": "e646c46613e56743e79e0ebda9b07ae7d96cdcb1dd36f10bf7856b8d76461e73"
+    },
+    "outputs/supplementary_material/table_s1_sofa_reconstruction.csv": {
+      "bytes": 2007,
+      "sha256": "c8f1f5df7955b1d948ed496c80430d6877a7afdc2b2c7333b22cd970db599c21"
+    },
+    "outputs/supplementary_material/table_s2_news2_fuzzy_mapping.csv": {
+      "bytes": 2070,
+      "sha256": "5b6a5f10f979c0b96f6a73c3c4a33df21d83e39c329f5354ee81464b5f98f8b3"
     }
   },
   "missing_expected_files": [],

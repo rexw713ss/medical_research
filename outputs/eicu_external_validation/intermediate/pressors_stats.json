@@ -1,8 +1,0 @@
-{
-  "source_rows_read": 4803719,
-  "pressor_rows": 776364,
-  "convertible_positive_rows": 104395,
-  "excluded_unconvertible_or_zero_rows": 671969,
-  "hourly_rows": 83045,
-  "seconds": 11.07682149996981
-}

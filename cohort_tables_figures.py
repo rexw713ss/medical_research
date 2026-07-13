@@ -199,9 +199,43 @@ def external_stay_ids(predictions_path: Path, chunksize: int) -> set[int]:
     return stay_ids
 
 
+def mimic_analytic_stays(
+    hourly_path: Path,
+    split_path: Path,
+    cache_path: Path,
+    chunksize: int,
+) -> pd.DataFrame:
+    """Return stays contributing at least one final 24-hour, valid-label window."""
+    if cache_path.exists() and cache_path.stat().st_mtime >= max(
+        hourly_path.stat().st_mtime,
+        split_path.stat().st_mtime,
+    ):
+        return pd.read_csv(cache_path)
+
+    split_map = pd.read_csv(split_path, usecols=["subject_id", "split"]).set_index("subject_id")["split"]
+    pairs: set[tuple[int, int, str]] = set()
+    usecols = ["subject_id", "stay_id", "sofa_hour", "label_sofa_increase_ge2_6h"]
+    for chunk_index, chunk in enumerate(pd.read_csv(hourly_path, usecols=usecols, chunksize=chunksize)):
+        eligible = chunk["label_sofa_increase_ge2_6h"].notna() & chunk["sofa_hour"].ge(23)
+        part = chunk.loc[eligible, ["subject_id", "stay_id"]].drop_duplicates()
+        part["split"] = part["subject_id"].map(split_map)
+        pairs.update(
+            (int(row.subject_id), int(row.stay_id), str(row.split))
+            for row in part.dropna(subset=["split"]).itertuples(index=False)
+        )
+        if (chunk_index + 1) % 10 == 0:
+            print(f"  Analytic-stay audit: {(chunk_index + 1) * chunksize:,} hourly rows scanned")
+
+    result = pd.DataFrame(sorted(pairs), columns=["subject_id", "stay_id", "split"])
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    result.to_csv(cache_path, index=False, compression="gzip")
+    return result
+
+
 def cohort_characteristics(
     mimic: pd.DataFrame,
     eicu: pd.DataFrame,
+    hourly_path: Path,
     split_path: Path,
     protocol_path: Path,
     external_predictions: Path,
@@ -210,6 +244,18 @@ def cohort_characteristics(
 ) -> pd.DataFrame:
     manifest = pd.read_csv(split_path)
     mimic = mimic.merge(manifest[["subject_id", "split"]], on="subject_id", how="inner", validate="many_to_one")
+    analytic_stays = mimic_analytic_stays(
+        hourly_path,
+        split_path,
+        Path("outputs/manuscript_tables_figures_6h/mimic_analytic_stays.csv.gz"),
+        chunksize,
+    )
+    mimic = mimic.merge(
+        analytic_stays[["subject_id", "stay_id"]],
+        on=["subject_id", "stay_id"],
+        how="inner",
+        validate="one_to_one",
+    )
     mimic["icu_los_days"] = (mimic["outtime"] - mimic["intime"]).dt.total_seconds() / 86400.0
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     full = {
@@ -724,6 +770,7 @@ def main() -> None:
     table1 = cohort_characteristics(
         mimic,
         eicu,
+        Path(args.hourly_csv),
         Path(args.split_manifest),
         Path(args.protocol),
         external_dir / "eicu_external_predictions.csv.gz",

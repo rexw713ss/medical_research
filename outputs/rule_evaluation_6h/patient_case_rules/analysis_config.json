@@ -1,0 +1,6 @@
+{
+  "checkpoint": "D:\\\u91ab\u8cc7\\outputs\\explicit_temporal_fnn_formal_6h\\seed_42\\best_model.pt",
+  "case_source": "D:\\\u91ab\u8cc7\\outputs\\rule_evaluation_6h\\selected_tp_fp_fn_cases.csv",
+  "activation_threshold": 0.1,
+  "ranking": "absolute trained rule weight multiplied by raw firing at the current prediction hour"
+}

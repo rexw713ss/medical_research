@@ -470,6 +470,9 @@ def optimized_cluster_bootstrap(
             tag = int(round(specificity * 100))
             row[f"sensitivity_at_spec_{tag}"] = float(tp / (tp + fn))
             row[f"specificity_at_spec_{tag}"] = float(tn / (tn + fp))
+            row[f"ppv_at_spec_{tag}"] = float(tp / (tp + fp)) if tp + fp else math.nan
+            row[f"npv_at_spec_{tag}"] = float(tn / (tn + fn)) if tn + fn else math.nan
+            row[f"f1_at_spec_{tag}"] = float(2 * tp / (2 * tp + fp + fn)) if 2 * tp + fp + fn else math.nan
         rows.append(row)
         if (replicate + 1) % 50 == 0 or replicate + 1 == reps:
             print(f"  bootstrap {replicate + 1}/{reps}", flush=True)
@@ -597,11 +600,14 @@ def write_report(
         tag = int(round(float(row["target_specificity"]) * 100))
         sensitivity_ci = fixed_ci[str(tag)]["sensitivity"]
         specificity_ci = fixed_ci[str(tag)]["specificity"]
+        ppv_ci = fixed_ci[str(tag)]["ppv"]
+        npv_ci = fixed_ci[str(tag)]["npv"]
         lines.append(
             f"| {float(row['target_specificity']):.0%} | {float(row['threshold']):.4f} | "
             f"{float(row['specificity']):.3f} ({specificity_ci[0]:.3f}-{specificity_ci[1]:.3f}) | "
             f"{float(row['sensitivity']):.3f} ({sensitivity_ci[0]:.3f}-{sensitivity_ci[1]:.3f}) | "
-            f"{float(row['ppv']):.3f} | {float(row['npv']):.3f} |"
+            f"{float(row['ppv']):.3f} ({ppv_ci[0]:.3f}-{ppv_ci[1]:.3f}) | "
+            f"{float(row['npv']):.3f} ({npv_ci[0]:.3f}-{npv_ci[1]:.3f}) |"
         )
     lines.extend(
         [
@@ -715,6 +721,9 @@ def main() -> None:
         fixed_ci[str(tag)] = {
             "sensitivity": percentile_ci(bootstrap[f"sensitivity_at_spec_{tag}"]),
             "specificity": percentile_ci(bootstrap[f"specificity_at_spec_{tag}"]),
+            "ppv": percentile_ci(bootstrap[f"ppv_at_spec_{tag}"]),
+            "npv": percentile_ci(bootstrap[f"npv_at_spec_{tag}"]),
+            "f1": percentile_ci(bootstrap[f"f1_at_spec_{tag}"]),
         }
     metrics = {
         "windows": len(predictions),

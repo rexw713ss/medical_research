@@ -8,21 +8,24 @@
 | `final_test_evaluation_6h/` | Frozen checkpoint、validation-only calibration、1,000 次 patient bootstrap | 最終 internal test；完整且已鎖定 |
 | `fnn_ablation_6h_equal_sample/` | 4 種 FNN variants、3 seeds、calibrated metrics 與 rule quality | 正式 6 h 消融 |
 | `temporal_rule_extraction_6h/` | Frozen full-cohort model 的 temporal fuzzy rules、support 與 event rate | 主文規則範例 |
-| `rule_evaluation_6h/` | 5-seed stability、complexity、concordance、drift、activated rules、case timelines | Rule Evaluation Framework |
+| `rule_evaluation_6h/` | 5-seed stability、complexity、guideline-direction alignment、drift、activated rules、case timelines | Rule Evaluation Framework |
 | `rule_evaluation_full_fnn_extra_seeds/` | Full FNN seeds 72/82 checkpoints 與 rule inventories | 5-seed stability 支援資料 |
 | `explicit_temporal_fnn_tuning_6h/` | Explicit-temporal FNN，30-trial validation-only Optuna | 新版模型 tuning |
 | `explicit_temporal_observation_sensitivity_6h/` | 4/6/12/24 h observation windows、3 seeds | Observation-window sensitivity |
 | `fair_comparison_6h_equal_sample/` | 共同 predictors、split、test windows 的模型與 predictions | 6 h benchmark 支援資料 |
 | `advanced_evaluation_6h_equal_sample/` | 500 次 patient bootstrap、paired comparison、DCA、lead time、calibration | 6 h benchmark 結果 |
 | `explicit_kg_tfnn_paired_comparison_6h/` | Explicit KG-TFNN 與 LR、EBM、XGBoost、GRU 的相同視窗 paired comparison | Primary equal-sample comparison；1,000 次 subject bootstrap |
+| `feature_matched_baselines_6h_equal_sample/` | 相同 39 hourly channels 的 GRU 與同源 summaries 的 XGBoost/LightGBM | Feature-matched architecture comparison |
 | `clinical_sensitivity_analyses_6h/` | SOFA outcome sensitivity、event alarm burden、MIMIC subgroups | Frozen full-cohort model sensitivity analyses |
 | `missingness_ablation_6h_equal_sample/` | No-missingness 與 missingness-only 3-seed ablation | Missingness contribution analysis |
 | `eicu_hospital_sensitivity_6h/` | Per-hospital performance 與 hospital-clustered bootstrap | External site heterogeneity sensitivity |
-| `eicu_readiness/` | eICU 原始資料與 cohort readiness audit | 外部資料稽核 |
 | `eicu_external_validation/final_frozen_model_evaluation/` | Final checkpoint、完整 MIMIC validation transfer、500 次 clustered bootstrap | 最終外部驗證 |
+| `eicu_external_validation/eicu_hourly_features.pkl` | MIMIC-compatible eICU hourly table | 外部驗證正式輸入；保留 pickle，移除重複 CSV 與 extraction cache |
 | `manuscript_tables_figures_6h/` | 成人 eligibility audit、Table 1–5、Figure 1–5 | 主文 cohort 與整合圖表 |
+| `expanded_experiment_reporting_6h/` | Cohort denominator、SOFA harmonization、raw/calibrated calibration、alarm/site definitions | 投稿方法與 supplement 稽核 |
+| `raw_rule_firing_6h/` | Raw product-t-norm firing 與 activation-threshold sensitivity | 規則實驗 |
+| `supplementary_material/` | Supplementary Tables S1--S13 與 Figures S1--S7；membership/SOFA sensitivity 圖已移入主文 | 投稿補充資料 |
 | `reproducibility_6h/` | Package versions、split/protocol/checkpoint/code SHA-256 | Primary analysis reproducibility manifest |
-| `model_evaluation/` | 2026-07-05 產生的 clinical-score 6/12/24 h diagnostic report | 6 h 可供 primary 參考；12/24 h 僅屬 secondary，且尚未包含新版 FNN |
 
 ## Tuning 結果
 

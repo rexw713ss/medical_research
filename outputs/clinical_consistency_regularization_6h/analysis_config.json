@@ -1,0 +1,14 @@
+{
+  "formal_full_data": false,
+  "analysis_scope": "exploratory_sample",
+  "sample_windows": 1000,
+  "one_window_per_stay": true,
+  "seeds": [
+    42,
+    52,
+    62
+  ],
+  "epsilon": 0.0001,
+  "violation_definition": "delta feature risk > epsilon and delta total hourly risk < -epsilon",
+  "risk_reversal_definition": "delta summed feature risk > epsilon and delta total hourly risk < -epsilon"
+}

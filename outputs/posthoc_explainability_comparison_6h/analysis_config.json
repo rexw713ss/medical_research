@@ -1,0 +1,11 @@
+{
+  "formal_full_data": false,
+  "analysis_scope": "exploratory_sample",
+  "sample_per_database": 1000,
+  "one_window_per_stay": true,
+  "perturbation_repeats": 3,
+  "perturbation_sd_fraction": 0.01,
+  "top_k": 5,
+  "seed": 42,
+  "ebm_comparator": "current-state 13-feature EBM; not 24-h feature matched"
+}

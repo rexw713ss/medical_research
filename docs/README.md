@@ -32,6 +32,7 @@
 - [eICU hospital-clustered sensitivity](../outputs/eicu_hospital_sensitivity_6h/eicu_hospital_sensitivity_report.md)
 - [Expanded cohort/SOFA/calibration/alarm/site reporting](../outputs/expanded_experiment_reporting_6h/expanded_experiment_reporting.md)
 - [Raw rule firing sensitivity](../outputs/raw_rule_firing_6h/raw_rule_firing_report.md)
+- [Supplementary Tables S1--S13 and Figures S1--S7](../outputs/supplementary_material/supplementary_material.md)
 - [論文圖表清單](paper_figures.md)
 - [eICU external validation report](../outputs/eicu_external_validation/final_frozen_model_evaluation/eicu_external_validation_report.md)
 

@@ -9,6 +9,8 @@
 - Index windows：至少具有 24 小時 history 的 hourly windows。
 - Primary model：Knowledge-Guided Explicit-Temporal FNN。
 - Primary comparison：相同 patient split、200,000 train windows、50,000 validation windows 與完整 test windows 的 equal-sample comparison。
+- Formal-data rule：正式 test evaluation 一律使用全部 eligible test windows；`smoke test`、`max_rows`、`max_stays` 或臨時抽樣只能做 pipeline validation，不得寫入投稿結果。
+- Sampled explanation analyses are exploratory：TreeSHAP/EBM/KG-TFNN explanation quality 與 consistency stress test 必須完成可分批 full-test-cohort 重跑後，才可列為正式實驗。
 - Primary metric：AUROC。
 - Key secondary metrics：AUPRC、Brier、ECE、calibration intercept/slope、90%/95% specificity sensitivity、DCA 與 lead time。
 - Uncertainty：`subject_id` clustered bootstrap 95% CI 與 paired model differences。
