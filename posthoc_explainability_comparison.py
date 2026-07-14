@@ -30,7 +30,12 @@ from anfis_model import (
     expert_feature_config,
 )
 from blackbox_baselines import matched_tree_feature_names
-from full_data_window_utils import FormalWindowData, iter_window_batches, load_formal_window_data
+from full_data_window_utils import (
+    FormalWindowData,
+    iter_window_batches,
+    load_formal_window_data,
+    sha256_file,
+)
 
 
 ROOT = Path(__file__).resolve().parent
@@ -63,6 +68,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--perturbation-sd-fraction", type=float, default=0.01)
     parser.add_argument("--progress-every", type=int, default=100_000)
     parser.add_argument("--device", default="auto")
+    parser.add_argument(
+        "--complexity-only",
+        action="store_true",
+        help="Build the unified complexity artifacts from an audited completed full-data run.",
+    )
     return parser.parse_args()
 
 
@@ -515,6 +525,179 @@ def markdown_table(frame: pd.DataFrame) -> str:
     return "\n".join([header, separator, *rows])
 
 
+def write_unified_explanation_complexity(
+    result: pd.DataFrame,
+    output: Path,
+) -> pd.DataFrame:
+    """Report one attribution-complexity definition shared by all explanation methods."""
+
+    expected_models = {
+        "KG-TFNN",
+        "LightGBM + TreeSHAP",
+        "XGBoost + TreeSHAP",
+        "EBM (current state)",
+    }
+    required = {
+        "model",
+        "mimic_windows",
+        "eicu_windows",
+        "effective_features_80_median",
+        "effective_features_80_iqr_low",
+        "effective_features_80_iqr_high",
+        "explanation_method",
+        "output_form",
+    }
+    missing = required - set(result.columns)
+    if missing:
+        raise ValueError(f"Explanation results lack complexity fields: {sorted(missing)}")
+    if set(result["model"]) != expected_models:
+        raise ValueError("Unified complexity requires the locked four-model explanation set.")
+
+    audit_path = output / "formal_cohort_audit.json"
+    if not audit_path.exists():
+        raise FileNotFoundError(audit_path)
+    cohort_audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    for database in ("MIMIC-IV", "eICU-CRD"):
+        record = cohort_audit[database]
+        if not record.get("all_prediction_windows_reconstructed", False):
+            raise ValueError(f"{database} full-data explanation audit did not pass.")
+        if record["processed_windows"] != record["expected_windows"]:
+            raise ValueError(f"{database} explanation analysis was not full cohort.")
+
+    complexity = result[
+        [
+            "model",
+            "explanation_method",
+            "output_form",
+            "mimic_windows",
+            "eicu_windows",
+            "effective_features_80_median",
+            "effective_features_80_iqr_low",
+            "effective_features_80_iqr_high",
+        ]
+    ].copy()
+    complexity.insert(1, "common_explanation_unit", "harmonized clinical variable")
+    complexity.insert(2, "available_variables", len(FEATURE_ORDER))
+    complexity.insert(3, "attribution_mass_threshold", 0.80)
+    complexity["normalized_effective_features_80_median"] = (
+        complexity["effective_features_80_median"] / len(FEATURE_ORDER)
+    )
+    complexity["lower_means_more_concentrated"] = True
+    complexity["architecture_matched"] = complexity["model"] != "EBM (current state)"
+
+    rule_path = ROOT / "outputs/rule_evaluation_6h/top_k_rule_complexity.csv"
+    rule_specific_mean = math.nan
+    if rule_path.exists():
+        rules = pd.read_csv(rule_path)
+        top_rules = rules[rules["rank"] <= 10]
+        if not top_rules.empty:
+            rule_specific_mean = float(top_rules["antecedent_count"].mean())
+    complexity["kg_tfnn_top10_mean_rule_antecedents_model_specific"] = np.where(
+        complexity["model"] == "KG-TFNN", rule_specific_mean, np.nan
+    )
+    complexity.to_csv(output / "unified_explanation_complexity.csv", index=False)
+
+    plot = complexity.sort_values("effective_features_80_median", ascending=True)
+    center = plot["effective_features_80_median"].to_numpy(dtype=float)
+    lower = center - plot["effective_features_80_iqr_low"].to_numpy(dtype=float)
+    upper = plot["effective_features_80_iqr_high"].to_numpy(dtype=float) - center
+    figure, axis = plt.subplots(figsize=(8, 4.8))
+    axis.errorbar(
+        center,
+        np.arange(len(plot)),
+        xerr=np.vstack([lower, upper]),
+        fmt="o",
+        capsize=4,
+        color="#0072B2",
+    )
+    axis.set_yticks(np.arange(len(plot)), plot["model"])
+    axis.set_xlim(0, len(FEATURE_ORDER))
+    axis.set(
+        xlabel="Clinical variables required for 80% absolute attribution mass",
+        title="Unified Local Explanation Complexity",
+    )
+    axis.grid(axis="x", alpha=0.2)
+    figure.tight_layout()
+    for suffix in ("png", "pdf"):
+        figure.savefig(
+            output / f"figures/unified_explanation_complexity.{suffix}",
+            dpi=300,
+            bbox_inches="tight",
+        )
+    plt.close(figure)
+
+    report_columns = [
+        "model",
+        "effective_features_80_median",
+        "effective_features_80_iqr_low",
+        "effective_features_80_iqr_high",
+        "normalized_effective_features_80_median",
+        "mimic_windows",
+        "eicu_windows",
+    ]
+    report = [
+        "# Unified Cross-Model Explanation Complexity",
+        "",
+        "## Common Definition",
+        "",
+        (
+            "For every eligible MIMIC-IV test window, each method's signed local "
+            "explanation was aggregated to the same 13 harmonized clinical variables. "
+            "Absolute attribution was normalized to sum to one within each window. "
+            "Complexity is the minimum number of variables required to explain 80% of "
+            "that attribution mass; lower values indicate a more concentrated explanation."
+        ),
+        "",
+        (
+            "Tree summary features were mapped back to their clinical variable, and EBM "
+            "interaction contributions were divided equally among participating variables. "
+            "The metric therefore compares explanation concentration, not native rule syntax."
+        ),
+        "",
+        markdown_table(complexity[report_columns]),
+        "",
+        "## Model-Specific Structural Complexity",
+        "",
+        (
+            f"KG-TFNN Top-10 rules contained a mean of {rule_specific_mean:.2f} antecedents "
+            "across the five-seed rule analysis. This rule-specific result is reported "
+            "separately and is not treated as directly equivalent to SHAP or EBM terms."
+        ),
+        "",
+        "## Interpretation Boundary",
+        "",
+        (
+            "This structural analysis does not constitute clinician validation. The EBM "
+            "uses current-state inputs and remains a non-architecture-matched comparator."
+        ),
+        "",
+    ]
+    (output / "unified_explanation_complexity_report.md").write_text(
+        "\n".join(report), encoding="utf-8"
+    )
+    complexity_audit = {
+        "status": "passed",
+        "source_results": str(output / "explanation_quality_comparison.csv"),
+        "source_results_sha256": sha256_file(
+            output / "explanation_quality_comparison.csv"
+        ),
+        "source_cohort_audit": str(audit_path),
+        "source_cohort_audit_sha256": sha256_file(audit_path),
+        "formal_full_data": True,
+        "mimic_windows": int(cohort_audit["MIMIC-IV"]["processed_windows"]),
+        "eicu_windows": int(cohort_audit["eICU-CRD"]["processed_windows"]),
+        "common_explanation_unit": "13 harmonized clinical variables",
+        "mass_threshold": 0.80,
+        "lower_means_more_concentrated": True,
+        "rule_antecedent_complexity_is_model_specific": True,
+        "clinician_validated": False,
+    }
+    (output / "unified_explanation_complexity_audit.json").write_text(
+        json.dumps(complexity_audit, indent=2), encoding="utf-8"
+    )
+    return complexity
+
+
 def choose_device(value: str) -> torch.device:
     if value != "auto":
         return torch.device(value)
@@ -530,6 +713,18 @@ def main() -> None:
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     (output / "figures").mkdir(exist_ok=True)
+
+    if args.complexity_only:
+        result_path = output / "explanation_quality_comparison.csv"
+        if not result_path.exists():
+            raise FileNotFoundError(
+                "A completed full-data explanation_quality_comparison.csv is required."
+            )
+        complexity = write_unified_explanation_complexity(
+            pd.read_csv(result_path), output
+        )
+        print(complexity.to_string(index=False), flush=True)
+        return
 
     scaling = json.loads(SCALING_JSON.read_text(encoding="utf-8"))["scaling"]
     scaling_mean = np.asarray(scaling["mean"], dtype=np.float32)[None, None, :]
@@ -670,6 +865,7 @@ def main() -> None:
     (output / "formal_cohort_audit.json").write_text(
         json.dumps(cohort_audits, indent=2), encoding="utf-8"
     )
+    write_unified_explanation_complexity(result, output)
 
     plot = result.set_index("model")
     metrics = [

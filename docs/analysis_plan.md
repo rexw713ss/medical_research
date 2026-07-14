@@ -15,15 +15,21 @@
 - Key secondary metrics：AUPRC、Brier、ECE、calibration intercept/slope、90%/95% specificity sensitivity、DCA 與 lead time。
 - Uncertainty：`subject_id` clustered bootstrap 95% CI 與 paired model differences。
 
+## Scope Amendment (2026-07-14)
+
+- 投稿範圍固定為單一 prediction horizon：未來 6 小時 SOFA increase >= 2。
+- 已建構的 12/24 小時 label 保留供未來研究使用，但本研究不執行或報告 12/24 小時 prediction-horizon experiments。
+- 這是分析範圍修訂，不得將 4/6/12/24 小時 observation-window sensitivity 誤寫成多個 prediction horizons。
+
 ## Secondary Analyses
 
-- 未來 12 小時 SOFA increase >= 2。
-- 未來 24 小時 SOFA increase >= 2。
 - 4/6/12/24 小時 observation-window sensitivity；這是 lookback length，不是 prediction horizon。
 - Full-cohort 6 h training 作為 sample-size/deployment sensitivity。
 - eICU frozen-checkpoint external validation。
+- Equal-sample KG-TFNN、LightGBM、XGBoost、GRU 與 current-state EBM 的 frozen eICU transport comparison。
+- 以 13 個 harmonized clinical variables 為共同單位的 explanation complexity analysis。
 
-12/24 h 不阻擋 6 h primary manuscript。除非命令明確傳入 `--horizons 12,24`，正式 comparison 與 evaluation 預設只執行 6 h。
+所有正式 comparison 與 evaluation 只執行 6 h；12/24 h labels 不進入本研究的正式表圖。
 
 ## Model Selection Policy
 
@@ -37,7 +43,7 @@
 1. Primary equal-sample 6 h internal test comparison。
 2. Full-cohort 6 h sample-size sensitivity。
 3. eICU external validation。
-4. 12/24 h secondary outcome analyses。
+4. Frozen eICU comparator transport 與 explanation-complexity analysis。
 
 ## Additional Robustness Analyses
 

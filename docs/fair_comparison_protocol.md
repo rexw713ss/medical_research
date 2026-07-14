@@ -1,6 +1,6 @@
 # 公平模型比較 Protocol
 
-更新日期：2026-07-10
+更新日期：2026-07-14
 
 ## 固定條件
 
@@ -9,7 +9,7 @@
 - Window key：以 `stay_id + sofa_hour` 唯一識別一個 prediction target。
 - Lookback：所有正式比較只納入至少具有 24 小時歷史的 target windows。
 - Primary outcome：未來 6 小時 `SOFA increase >= 2`。
-- Secondary outcomes：未來 12 與 24 小時 `SOFA increase >= 2`；必須明確指定後才執行。
+- Prediction horizon：本研究只執行未來 6 小時 outcome；12/24 小時 labels 保留但不進入正式 experiments。
 - Predictors：所有 machine-learning models 固定使用 `FEATURE_ORDER` 的 13 個來源變數。
 - Imputation：只在同一 ICU stay 內 forward-fill，再補固定臨床預設值；不使用 backward-fill。
 - Test policy：test set 一律使用完整 eligible windows，不允許再抽樣。
@@ -18,7 +18,9 @@
 
 Tabular models 使用相同來源變數的 index-time values；FNN、LSTM 與 GRU 使用相同變數的 24 小時 sequence。兩者的差異屬於待比較的 temporal representation，不額外加入 SOFA 或其他 predictors。NEWS2 與 SOFA 為預先定義的 clinical-score comparators，因此不列入「相同 ML predictors」限制，但仍使用完全相同的 patient split、target windows 與 outcomes。
 
-## Full-cohort Comparison
+## Available Cohort Counts
+
+下表保留 preprocessing 已建立的 cohort counts；依 2026-07-14 scope amendment，只有 6h 列進入本研究的模型比較，12/24h 不執行也不報告。
 
 | Horizon | Train | Validation | Test |
 |---|---:|---:|---:|
@@ -28,8 +30,8 @@ Tabular models 使用相同來源變數的 index-time values；FNN、LSTM 與 GR
 
 ## Equal-sample Comparison
 
-- 每個 horizon 固定抽取 200,000 train windows。
-- 每個 horizon 固定抽取 50,000 validation windows。
+- 6h primary outcome 固定抽取 200,000 train windows。
+- 6h primary outcome 固定抽取 50,000 validation windows。
 - 依 outcome 分層抽樣並固定 seed 42。
 - Test windows 與 full-cohort comparison 完全相同。
 - 固定名單為 `equal_sample_windows.csv.gz`。
@@ -44,8 +46,7 @@ Tabular models 使用相同來源變數的 index-time values；FNN、LSTM 與 GR
 .\env\Scripts\python.exe .\run_fair_comparison.py --mode equal_sample
 ```
 
-上述預設只執行 6 h primary outcome。Secondary analyses 使用
-`--horizons 12,24`，不得與 primary 表格混為同一項主要假設檢定。
+上述正式 protocol 只執行 6 h primary outcome。12/24 h cohort definitions 僅留作未來研究，不得加入目前投稿表格。
 
 另跑 full-cohort comparison：
 

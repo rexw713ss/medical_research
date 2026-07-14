@@ -62,6 +62,7 @@ FORMAL_CONFIGS = [
     "outputs/temporal_rule_extraction_6h/rule_extraction_config.json",
     "outputs/eicu_external_validation/eicu_preprocessing_config.json",
     "outputs/eicu_external_validation/final_frozen_model_evaluation/external_validation_config.json",
+    "outputs/eicu_frozen_baseline_validation_6h/analysis_config.json",
     "outputs/posthoc_explainability_comparison_6h/analysis_config.json",
     "outputs/clinical_consistency_regularization_6h/analysis_config.json",
 ]
@@ -259,6 +260,31 @@ def audit_full_window_analyses(root: Path, checks: list[Check]) -> None:
     ]
     checks.append(Check("all post-hoc models use full cohorts", not invalid_explanations, invalid_explanations, []))
 
+    complexity = load_json(
+        root
+        / "outputs/posthoc_explainability_comparison_6h/unified_explanation_complexity_audit.json"
+    )
+    check_equal(checks, "unified explanation complexity audit status", complexity["status"], "passed")
+    check_equal(checks, "unified complexity formal_full_data", complexity["formal_full_data"], True)
+    check_equal(
+        checks,
+        "unified complexity MIMIC windows",
+        complexity["mimic_windows"],
+        MIMIC_FULL["test_windows"],
+    )
+    check_equal(
+        checks,
+        "unified complexity eICU windows",
+        complexity["eicu_windows"],
+        EICU_FULL["windows"],
+    )
+    check_equal(
+        checks,
+        "unified complexity clinical-variable denominator",
+        complexity["common_explanation_unit"],
+        "13 harmonized clinical variables",
+    )
+
     stale_sample_caches = [
         root / "outputs/posthoc_explainability_comparison_6h/mimic_explanation_sample.csv",
         root / "outputs/posthoc_explainability_comparison_6h/eicu_explanation_sample.csv",
@@ -299,6 +325,56 @@ def audit_external(root: Path, checks: list[Check]) -> None:
     check_equal(checks, "eICU external stays", metrics["stays"], EICU_FULL["stays"])
     check_equal(checks, "eICU external inference windows", stats["prediction_windows"], EICU_FULL["windows"])
     check_equal(checks, "eICU no fitting", metrics["no_eicu_fitting"], True)
+
+    baseline_root = root / "outputs/eicu_frozen_baseline_validation_6h"
+    baseline_audit = load_json(baseline_root / "formal_cohort_and_freeze_audit.json")
+    external = baseline_audit["external_cohort"]
+    check_equal(checks, "frozen baseline external audit status", baseline_audit["status"], "passed")
+    check_equal(checks, "frozen baseline eICU windows", external["processed_windows"], EICU_FULL["windows"])
+    check_equal(checks, "frozen baseline eICU patients", external["processed_patients"], EICU_FULL["patients"])
+    check_equal(checks, "frozen baseline eICU stays", external["processed_stays"], EICU_FULL["stays"])
+    check_equal(checks, "frozen baseline eICU positives", external["processed_positive"], EICU_FULL["positive"])
+    check_equal(
+        checks,
+        "frozen baseline all eICU windows reconstructed",
+        external["all_prediction_windows_reconstructed"],
+        True,
+    )
+    check_equal(checks, "frozen baseline external subsampling disabled", baseline_audit["external_subsampling"], False)
+    check_equal(checks, "frozen baseline no eICU model fitting", baseline_audit["eicu_model_refitting"], False)
+    check_equal(checks, "frozen baseline no eICU calibration fitting", baseline_audit["eicu_calibration_fitting"], False)
+    check_equal(checks, "frozen baseline no eICU threshold selection", baseline_audit["eicu_threshold_selection"], False)
+    check_equal(checks, "frozen baseline bootstrap unit", baseline_audit["bootstrap_unit"], "subject_id")
+    check_equal(checks, "frozen baseline bootstrap replicates", baseline_audit["bootstrap_reps"], 200)
+    source_checks = baseline_audit["source_prediction_reproduction"]
+    check_equal(checks, "frozen baseline source model checks", len(source_checks), 5)
+    check_equal(
+        checks,
+        "all frozen baselines reproduce source predictions",
+        all(record["passed"] for record in source_checks.values()),
+        True,
+    )
+    with (baseline_root / "external_baseline_metrics.csv").open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as handle:
+        baseline_rows = list(csv.DictReader(handle))
+    check_equal(checks, "frozen external comparison model rows", len(baseline_rows), 5)
+    invalid_rows = [
+        row["model"]
+        for row in baseline_rows
+        if int(float(row["windows"])) != EICU_FULL["windows"]
+        or int(float(row["patients"])) != EICU_FULL["patients"]
+        or int(float(row["stays"])) != EICU_FULL["stays"]
+        or str(row["no_eicu_fitting"]).lower() != "true"
+    ]
+    checks.append(
+        Check(
+            "all frozen external comparator rows use full cohort",
+            not invalid_rows,
+            invalid_rows,
+            [],
+        )
+    )
 
 
 def audit_output_registry(root: Path, checks: list[Check]) -> None:
@@ -351,6 +427,7 @@ def write_report(output_dir: Path, checks: list[Check]) -> None:
         "| Primary full-cohort KG-TFNN | 3,843,400 | 819,573 | 830,839 | Every eligible MIMIC-IV window |",
         "| Equal-sample sensitivity | 200,000 | 50,000 | 830,839 | Prespecified fair train/validation subset; complete test |",
         "| Frozen eICU transport | NA | NA | 6,215,890 | Every eligible external window; no refitting/recalibration |",
+        "| Frozen eICU equal-sample comparator transport | 200,000 | 50,000 | 6,215,890 | Five models; complete external cohort and source-only calibration |",
         "| Full post-hoc XAI | NA | NA | 830,839 MIMIC + 6,215,890 eICU | Every prediction-key window |",
         "| Consistency behavior | NA | NA | 830,839 per model | 3 seeds x 2 variants = 4,985,034 model-window evaluations |",
         "",

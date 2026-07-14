@@ -1,0 +1,14 @@
+{
+  "hourly_pickle": "D:\\醫資\\outputs\\eicu_external_validation\\eicu_hourly_features.pkl",
+  "reference_predictions": "D:\\醫資\\outputs\\eicu_external_validation\\final_frozen_model_evaluation\\eicu_external_predictions.csv.gz",
+  "output_dir": "outputs/eicu_frozen_baseline_validation_6h",
+  "batch_size": 4096,
+  "bootstrap_reps": 200,
+  "bootstrap_seed": 42,
+  "specificities": "0.90,0.95",
+  "n_bins": 10,
+  "progress_every": 250000,
+  "device": "auto",
+  "force_predictions": false,
+  "device_used": "cuda"
+}

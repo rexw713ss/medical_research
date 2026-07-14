@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-14T07:22:24.188904+00:00",
+  "generated_utc": "2026-07-14T13:16:53.655320+00:00",
   "status": "passed",
   "primary_outcome": "future 6-hour SOFA increase >=2",
   "scope_policy": {
@@ -30,7 +30,7 @@
       "positive": 294949
     }
   },
-  "checks_passed": 94,
+  "checks_passed": 116,
   "checks_failed": 0,
   "checks": [
     {
@@ -98,6 +98,13 @@
     },
     {
       "name": "no runtime truncation: outputs/eicu_external_validation/final_frozen_model_evaluation/external_validation_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/eicu_frozen_baseline_validation_6h/analysis_config.json",
       "passed": true,
       "observed": [],
       "expected": [],
@@ -594,6 +601,41 @@
       "note": ""
     },
     {
+      "name": "unified explanation complexity audit status",
+      "passed": true,
+      "observed": "passed",
+      "expected": "passed",
+      "note": ""
+    },
+    {
+      "name": "unified complexity formal_full_data",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "unified complexity MIMIC windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "unified complexity eICU windows",
+      "passed": true,
+      "observed": 6215890,
+      "expected": 6215890,
+      "note": ""
+    },
+    {
+      "name": "unified complexity clinical-variable denominator",
+      "passed": true,
+      "observed": "13 harmonized clinical variables",
+      "expected": "13 harmonized clinical variables",
+      "note": ""
+    },
+    {
       "name": "legacy sampled XAI caches removed",
       "passed": true,
       "observed": [],
@@ -682,6 +724,118 @@
       "passed": true,
       "observed": true,
       "expected": true,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline external audit status",
+      "passed": true,
+      "observed": "passed",
+      "expected": "passed",
+      "note": ""
+    },
+    {
+      "name": "frozen baseline eICU windows",
+      "passed": true,
+      "observed": 6215890,
+      "expected": 6215890,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline eICU patients",
+      "passed": true,
+      "observed": 80239,
+      "expected": 80239,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline eICU stays",
+      "passed": true,
+      "observed": 99262,
+      "expected": 99262,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline eICU positives",
+      "passed": true,
+      "observed": 294949,
+      "expected": 294949,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline all eICU windows reconstructed",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline external subsampling disabled",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline no eICU model fitting",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline no eICU calibration fitting",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline no eICU threshold selection",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline bootstrap unit",
+      "passed": true,
+      "observed": "subject_id",
+      "expected": "subject_id",
+      "note": ""
+    },
+    {
+      "name": "frozen baseline bootstrap replicates",
+      "passed": true,
+      "observed": 200,
+      "expected": 200,
+      "note": ""
+    },
+    {
+      "name": "frozen baseline source model checks",
+      "passed": true,
+      "observed": 5,
+      "expected": 5,
+      "note": ""
+    },
+    {
+      "name": "all frozen baselines reproduce source predictions",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "frozen external comparison model rows",
+      "passed": true,
+      "observed": 5,
+      "expected": 5,
+      "note": ""
+    },
+    {
+      "name": "all frozen external comparator rows use full cohort",
+      "passed": true,
+      "observed": [],
+      "expected": [],
       "note": ""
     },
     {

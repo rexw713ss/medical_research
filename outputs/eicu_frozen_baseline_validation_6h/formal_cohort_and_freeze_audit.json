@@ -1,0 +1,109 @@
+{
+  "status": "passed",
+  "target": "label_sofa_increase_ge2_6h",
+  "observation_window_hours": 24,
+  "comparison_protocol": "equal_sample",
+  "external_cohort": {
+    "database": "eICU-CRD",
+    "prediction_path": "D:\\醫資\\outputs\\eicu_external_validation\\final_frozen_model_evaluation\\eicu_external_predictions.csv.gz",
+    "prediction_sha256": "384f920ddce805a00a292feb739a34b8db0e4608a5ee595207c929ed6987969c",
+    "expected_windows": 6215890,
+    "processed_windows": 6215890,
+    "expected_patients": 80239,
+    "processed_patients": 80239,
+    "expected_stays": 99262,
+    "processed_stays": 99262,
+    "expected_positive": 294949,
+    "processed_positive": 294949,
+    "all_prediction_windows_reconstructed": true
+  },
+  "artifact_audit": {
+    "kg_tfnn_equal_sample": {
+      "validation_predictions": "D:\\醫資\\outputs\\fnn_ablation_6h_equal_sample\\seed_42\\full\\validation_predictions.csv.gz",
+      "validation_predictions_sha256": "64d76d896e1e9e9d765a9b97539c2e0efdc524eaba7ef05b175eeb98c0e7730c",
+      "validation_windows": 50000,
+      "validation_positive": 2906,
+      "model_artifact": "D:\\醫資\\outputs\\fnn_ablation_6h_equal_sample\\seed_42\\full\\best_model.pt",
+      "model_artifact_sha256": "120a6e526a2062eb522bee5ae81843ce66c63521a42ee27b265cf555989e3ff3"
+    },
+    "lightgbm_matched": {
+      "validation_predictions": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\lightgbm\\val_predictions.csv.gz",
+      "validation_predictions_sha256": "ba42c96a40261387ac121270ebbb36f294e4491c1d71fa8565bf9217ebabbf40",
+      "validation_windows": 50000,
+      "validation_positive": 2906,
+      "model_artifact": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\lightgbm\\model.joblib",
+      "model_artifact_sha256": "b7ce37cdf9e8801ed59f418ba3a9b838b1ef08d71d5210b91c52ed629bf13a3f"
+    },
+    "xgboost_matched": {
+      "validation_predictions": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\xgboost\\val_predictions.csv.gz",
+      "validation_predictions_sha256": "7d2a74d3eff84352076713ff3a35d379963ca4292ff9f0d39c2479889b4fa5e4",
+      "validation_windows": 50000,
+      "validation_positive": 2906,
+      "model_artifact": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched_summary\\xgboost\\model.joblib",
+      "model_artifact_sha256": "c6af36691323f7197c5ac2ea00b2aea2c41d5716295c8651496d4d3520ed9f92"
+    },
+    "gru_matched": {
+      "validation_predictions": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched\\gru\\val_predictions.csv.gz",
+      "validation_predictions_sha256": "7bc18660c9006aabb778bab88a0c61e81b34e39a0759fb9ed30744107c83c8d8",
+      "validation_windows": 50000,
+      "validation_positive": 2906,
+      "model_artifact": "D:\\醫資\\outputs\\feature_matched_baselines_6h_equal_sample\\sequence_matched\\gru\\best_model.pt",
+      "model_artifact_sha256": "38186cea281f96b7c3724d3fb7a7782cea84f45b0b9cb759ff3ecad1c62c0b12"
+    },
+    "ebm_current_state": {
+      "validation_predictions": "D:\\醫資\\outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\ebm\\val_predictions.csv.gz",
+      "validation_predictions_sha256": "0b0bc253fff2c04eae5fa993dbbd760aef7f235431ce8bd955220b93f35ce9af",
+      "validation_windows": 50000,
+      "validation_positive": 2906,
+      "model_artifact": "D:\\醫資\\outputs\\fair_comparison_6h_equal_sample\\interpretable_6h\\protocol\\ebm\\model.joblib",
+      "model_artifact_sha256": "f3c5b620374de3449c58e68403296665935217a84a2428c2438671627266cc79"
+    }
+  },
+  "source_prediction_reproduction": {
+    "kg_tfnn_equal_sample": {
+      "windows": 50000,
+      "maximum_absolute_probability_difference": 2.980194091506405e-08,
+      "mean_absolute_probability_difference": 6.283432279154955e-09,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "lightgbm_matched": {
+      "windows": 50000,
+      "maximum_absolute_probability_difference": 2.980194091506405e-08,
+      "mean_absolute_probability_difference": 5.2576660846623965e-09,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "xgboost_matched": {
+      "windows": 50000,
+      "maximum_absolute_probability_difference": 2.980117796980153e-08,
+      "mean_absolute_probability_difference": 5.639479780829571e-09,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "gru_matched": {
+      "windows": 50000,
+      "maximum_absolute_probability_difference": 2.9800415024539006e-08,
+      "mean_absolute_probability_difference": 5.843650972946202e-09,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "ebm_current_state": {
+      "windows": 50000,
+      "maximum_absolute_probability_difference": 2.4641418461257558e-08,
+      "mean_absolute_probability_difference": 7.815194516073293e-10,
+      "tolerance": 0.0001,
+      "passed": true
+    }
+  },
+  "scaling_sha256": "038939bacaf33157b30001501be1d2360eedfe94f10e19c4cb3476aac0d07d8b",
+  "all_models_share_mimic_validation_windows": true,
+  "all_models_share_eicu_windows": true,
+  "external_subsampling": false,
+  "eicu_model_refitting": false,
+  "eicu_calibration_fitting": false,
+  "eicu_threshold_selection": false,
+  "bootstrap_unit": "subject_id",
+  "bootstrap_reps": 200,
+  "device": "cuda"
+}

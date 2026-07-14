@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "source_results": "D:\\\u91ab\u8cc7\\outputs\\posthoc_explainability_comparison_6h\\explanation_quality_comparison.csv",
+  "source_results_sha256": "4574ecaf75684bb8aa861574e9e7820df9caf91066ca5affcf31434981646ef8",
+  "source_cohort_audit": "D:\\\u91ab\u8cc7\\outputs\\posthoc_explainability_comparison_6h\\formal_cohort_audit.json",
+  "source_cohort_audit_sha256": "792b1bb7cc6eccbff8e2e4e5d0ec9625cca54be5af5ff8855135829b5a9497a8",
+  "formal_full_data": true,
+  "mimic_windows": 830839,
+  "eicu_windows": 6215890,
+  "common_explanation_unit": "13 harmonized clinical variables",
+  "mass_threshold": 0.8,
+  "lower_means_more_concentrated": true,
+  "rule_antecedent_complexity_is_model_specific": true,
+  "clinician_validated": false
+}

@@ -1,0 +1,95 @@
+{
+  "design": "MIMIC validation-only calibration and thresholds transported unchanged",
+  "models": {
+    "kg_tfnn_equal_sample": {
+      "model": "KG-TFNN (equal-sample)",
+      "source": "MIMIC-IV validation only",
+      "validation_windows": 50000,
+      "validation_patients": 5796,
+      "validation_prevalence": 0.05812,
+      "raw_probability_column": "y_prob_raw",
+      "calibration": {
+        "method": "Platt logistic calibration on raw-probability logit",
+        "intercept": -2.8342230571945173,
+        "slope": 1.1045367010866165
+      },
+      "specificity_thresholds": {
+        "0.9": 0.0925406721668563,
+        "0.95": 0.11522707411446863
+      },
+      "no_eicu_outcome_used": true
+    },
+    "lightgbm_matched": {
+      "model": "LightGBM (feature-matched)",
+      "source": "MIMIC-IV validation only",
+      "validation_windows": 50000,
+      "validation_patients": 5796,
+      "validation_prevalence": 0.05812,
+      "raw_probability_column": "y_prob",
+      "calibration": {
+        "method": "Platt logistic calibration on raw-probability logit",
+        "intercept": -2.5382191872266318,
+        "slope": 1.1910564189096953
+      },
+      "specificity_thresholds": {
+        "0.9": 0.10326555887187767,
+        "0.95": 0.12845526743484695
+      },
+      "no_eicu_outcome_used": true
+    },
+    "xgboost_matched": {
+      "model": "XGBoost (feature-matched)",
+      "source": "MIMIC-IV validation only",
+      "validation_windows": 50000,
+      "validation_patients": 5796,
+      "validation_prevalence": 0.05812,
+      "raw_probability_column": "y_prob",
+      "calibration": {
+        "method": "Platt logistic calibration on raw-probability logit",
+        "intercept": -2.6610531405742193,
+        "slope": 1.3100046054590724
+      },
+      "specificity_thresholds": {
+        "0.9": 0.10007256401486299,
+        "0.95": 0.12815581606125911
+      },
+      "no_eicu_outcome_used": true
+    },
+    "gru_matched": {
+      "model": "GRU (feature-matched)",
+      "source": "MIMIC-IV validation only",
+      "validation_windows": 50000,
+      "validation_patients": 5796,
+      "validation_prevalence": 0.05812,
+      "raw_probability_column": "y_prob",
+      "calibration": {
+        "method": "Platt logistic calibration on raw-probability logit",
+        "intercept": -2.692555114760034,
+        "slope": 0.8966530053129607
+      },
+      "specificity_thresholds": {
+        "0.9": 0.09887583247605126,
+        "0.95": 0.11981835815590483
+      },
+      "no_eicu_outcome_used": true
+    },
+    "ebm_current_state": {
+      "model": "EBM (current state)",
+      "source": "MIMIC-IV validation only",
+      "validation_windows": 50000,
+      "validation_patients": 5796,
+      "validation_prevalence": 0.05812,
+      "raw_probability_column": "y_prob",
+      "calibration": {
+        "method": "Platt logistic calibration on raw-probability logit",
+        "intercept": -0.2334838595784014,
+        "slope": 0.9043393250361677
+      },
+      "specificity_thresholds": {
+        "0.9": 0.083448882193792,
+        "0.95": 0.09796876233827853
+      },
+      "no_eicu_outcome_used": true
+    }
+  }
+}

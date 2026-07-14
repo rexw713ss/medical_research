@@ -19,6 +19,7 @@
 | `rule_evaluation_6h/` | Complexity、5-seed stability、alignment、drift、activated rules、case timelines | Canonical Rule Evaluation Framework |
 | `rule_evaluation_full_fnn_extra_seeds/` | Seeds 72/82 checkpoints 與 rule inventories | Rule-stability supporting artifacts |
 | `eicu_external_validation/final_frozen_model_evaluation/` | Frozen MIMIC model transported to eICU without fitting/recalibration | Canonical external validation |
+| `eicu_frozen_baseline_validation_6h/` | Equal-sample KG-TFNN、LightGBM、XGBoost、GRU、current-state EBM frozen transport | Complete 6,215,890-window external comparison；200 次 patient bootstrap |
 
 ## B. Formal Sensitivity And Reporting
 
@@ -30,9 +31,9 @@
 | `eicu_hospital_sensitivity_6h/` | 205-hospital performance 與 hospital-cluster bootstrap | External site heterogeneity |
 | `raw_rule_firing_6h/` | Product-t-norm firing 與 activation-threshold sensitivity | Rule activation sensitivity |
 | `expanded_experiment_reporting_6h/` | Cohort exclusions、SOFA harmonization、raw/calibrated results、alarm/site definitions | Methods/reporting audit |
-| `posthoc_explainability_comparison_6h/` | Full-data TreeSHAP/current-state EBM/KG-TFNN structural benchmark | 830,839 MIMIC + 6,215,890 eICU windows；不是 clinician validation |
+| `posthoc_explainability_comparison_6h/` | Full-data TreeSHAP/current-state EBM/KG-TFNN structural benchmark 與統一 complexity | 830,839 MIMIC + 6,215,890 eICU windows；不是 clinician validation |
 | `clinical_consistency_regularization_6h/` | Full-test violation/reversal stress test | 3 seeds x 2 variants；每模型 830,839 windows |
-| `formal_data_scope_audit_6h/` | Canonical experiment counts 與 runtime-limit audit | 94 checks passed、0 failed |
+| `formal_data_scope_audit_6h/` | Canonical experiment counts 與 runtime-limit audit | 116 checks passed、0 failed |
 | `manuscript_tables_figures_6h/` | Cohort flow、Table 1--5 與 manuscript figures | Canonical publication artifacts |
 | `supplementary_material/` | Supplementary Tables S1--S13 與 Figures S1--S7 | Canonical supplement source tables/figures |
 | `reproducibility_6h/` | Package versions、hashes、test-lock policy | Canonical reproducibility manifest |
@@ -58,8 +59,10 @@
 - Feature-matched LightGBM：AUROC 0.6904，AUPRC 0.1710。
 - Feature-matched XGBoost：AUROC 0.6870，AUPRC 0.1665。
 - Frozen eICU：AUROC 0.6221，AUPRC 0.0922。
+- Equal-sample frozen eICU：KG-TFNN 0.6100/0.0862、LightGBM 0.6247/0.0949、XGBoost 0.6323/0.0999、GRU 0.6036/0.0721、current-state EBM 0.5869/0.0695（AUROC/AUPRC）。
 - eICU cohort：80,239 patients、99,262 stays、6,215,890 windows。
 - Full-data XAI：KG-TFNN stability 1.000、within-stay continuity 0.998；LightGBM + TreeSHAP 為 0.965、0.914。
+- Unified complexity：80% attribution mass 所需 clinical variables 為 KG-TFNN 5、LightGBM 6、XGBoost 7、current-state EBM 6。
 - Full-data consistency audit：rule stability 0.587 至 0.674，但 violation/reversal/drift/correlation 未一致改善。
 
 ## Retention Rules

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-14T07:23:47.494145+00:00",
+  "generated_utc": "2026-07-14T13:19:54.157715+00:00",
   "study": "Primary 6-hour SOFA increase >=2 KG-TFNN",
   "python": "3.12.12 (main, Feb 12 2026, 00:40:26) [MSC v.1944 64 bit (AMD64)]",
   "platform": "Windows-10-10.0.19045-SP0",
@@ -64,6 +64,10 @@
       "bytes": 6586,
       "sha256": "4731ab8e9f237a7130209d01db1a84bdb9b34b3545dbb7510575e68814d150ef"
     },
+    "eicu_frozen_baseline_validation.py": {
+      "bytes": 38032,
+      "sha256": "8b5a61bc503894bff21ea92c5e004d0cb372d62dd2e6495d89449308668180d5"
+    },
     "blackbox_baselines.py": {
       "bytes": 69258,
       "sha256": "cf42261dfae185374c173ccad88a3ceba12c7a2b4bf9cc5fa4641e5b85c5279a"
@@ -77,8 +81,8 @@
       "sha256": "d2a1fa83a0e1b2513b11623f766d448ed852e6f23d81481d03bd012ffbb2185b"
     },
     "posthoc_explainability_comparison.py": {
-      "bytes": 29682,
-      "sha256": "cb5f2ac289b33515232337a0fa20ee16caf0f882d85356bc653c8b18ce22f28c"
+      "bytes": 37356,
+      "sha256": "36f1365f9450896737c5f7c245de8b50ea01f1ffc766816b3ced48e44844b78a"
     },
     "clinical_consistency_regularization_analysis.py": {
       "bytes": 14083,
@@ -89,8 +93,8 @@
       "sha256": "c95cfc4cb6e497a724b27d05b259031b606a518922c12019f9c113e0c84d3ed5"
     },
     "formal_data_scope_audit.py": {
-      "bytes": 19542,
-      "sha256": "cb7ffedf5b8aadbb258e44ad21d8f6e4ece39f15b5e7c7a4227861bf307310e9"
+      "bytes": 23335,
+      "sha256": "c4cf335956e8babf8a259f55458ad92b9abbcbf8ec6ce774a900bde11beb8586"
     },
     "sofa_documentation_bias_analysis.py": {
       "bytes": 11819,
@@ -152,6 +156,34 @@
       "bytes": 2563,
       "sha256": "4574ecaf75684bb8aa861574e9e7820df9caf91066ca5affcf31434981646ef8"
     },
+    "outputs/posthoc_explainability_comparison_6h/unified_explanation_complexity.csv": {
+      "bytes": 1099,
+      "sha256": "0f3ab0d97f1ceec2fa948faa07f44c0a6162b18840cfcf806407932990208e98"
+    },
+    "outputs/posthoc_explainability_comparison_6h/unified_explanation_complexity_audit.json": {
+      "bytes": 775,
+      "sha256": "e608e7b8023d9149da80ed78e5b25ca0deddc3a3aacdf28a80534bd6e350c496"
+    },
+    "outputs/eicu_frozen_baseline_validation_6h/external_baseline_metrics.csv": {
+      "bytes": 6674,
+      "sha256": "e637f67e4f08cd55311d1afe574c4df76cd42b499b27b5ac09c25e4cac7827b2"
+    },
+    "outputs/eicu_frozen_baseline_validation_6h/paired_vs_equal_sample_kg_tfnn.csv": {
+      "bytes": 2574,
+      "sha256": "e4eaf93eac7aa76af027bb90b139bf71305ca02f3bd1ac43aa3fa25cb349fdc6"
+    },
+    "outputs/eicu_frozen_baseline_validation_6h/formal_cohort_and_freeze_audit.json": {
+      "bytes": 5459,
+      "sha256": "52fef9290a07f51547ce370399282c0ec2b9fb1fc54e7622dff8343cfbb18703"
+    },
+    "outputs/eicu_frozen_baseline_validation_6h/mimic_transfer_parameters.json": {
+      "bytes": 3217,
+      "sha256": "b94f4f7a84a120ea9a8890187e38d09c993b129452e104850c6fae2002457b5a"
+    },
+    "outputs/eicu_frozen_baseline_validation_6h/source_prediction_reproduction.json": {
+      "bytes": 1812,
+      "sha256": "1ef5a50d333444d9ef49b94a260062b95d65e8c364394712f5c75dd3bd84bb8f"
+    },
     "outputs/clinical_consistency_regularization_6h/analysis_config.json": {
       "bytes": 602,
       "sha256": "2ae01de7d4f76c4968aba99e928d09dbb91a3fa4fda8c0361d0628d1dfc54b9d"
@@ -165,12 +197,12 @@
       "sha256": "c878660a1195f8bd54db68aa4367ee324552fb4d5427944387a7a430167879d5"
     },
     "outputs/formal_data_scope_audit_6h/formal_data_scope_audit.json": {
-      "bytes": 18479,
-      "sha256": "f4e151474d940eff24b530d7836e9d8a45338447ddc2ff11272d1a1a0b43961a"
+      "bytes": 22285,
+      "sha256": "07c6a04709cf28bdaa1f58f4b4d9f2b68cd0e83217133e490d65aa8163d42476"
     },
     "outputs/formal_data_scope_audit_6h/formal_data_scope_audit.md": {
-      "bytes": 1188,
-      "sha256": "0c75d284bf10a2608d081dde9fbd4ef63630e1991bbdebd97a777c774a788828"
+      "bytes": 1339,
+      "sha256": "01fbe5e575f6279a386e55db348de9efe87666adab2805fa0c8f486afcaaecc4"
     },
     "outputs/sofa_documentation_bias_6h/documentation_bias_audit.json": {
       "bytes": 449,
@@ -189,16 +221,20 @@
       "sha256": "5b6a5f10f979c0b96f6a73c3c4a33df21d83e39c329f5354ee81464b5f98f8b3"
     },
     "paper/TSP_template.tex": {
-      "bytes": 111993,
-      "sha256": "0739d08e68cd852216db87625ddca4ff437aae84c4213e4b64d9d4ad562d8c96"
+      "bytes": 119289,
+      "sha256": "0fd751432cca6d0a58bd833ea1abd73ea6e4ec41b11da954b068d3573ad98d37"
     },
     "paper/Supplementary_Material.tex": {
       "bytes": 26180,
       "sha256": "1afd145cb14ab855c3ed3a63e772129d515fa6746826b426ffb33a75a7cf5478"
     },
     "docs/manuscript_experiment_audit.md": {
-      "bytes": 11709,
-      "sha256": "05e5793f07e1570b1b91fef7769769e534f4f2e539961a3011293cc2293976e3"
+      "bytes": 14147,
+      "sha256": "6fa886a17bf5f99f0bed3e4c4cecbf05116d1268628505a90c2ab041d8f1ac43"
+    },
+    "docs/analysis_plan.md": {
+      "bytes": 3256,
+      "sha256": "a235c42dba0a70b6cdfbdc6776f871f4f13259f93a19769aad13ec1c2cc3b50c"
     }
   },
   "missing_expected_files": [],
