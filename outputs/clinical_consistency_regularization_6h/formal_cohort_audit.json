@@ -1,0 +1,14 @@
+{
+  "database": "MIMIC-IV",
+  "prediction_path": "D:\\\u91ab\u8cc7\\outputs\\explicit_kg_tfnn_paired_comparison_6h\\inputs\\explicit_kg_tfnn\\test_predictions.csv.gz",
+  "prediction_sha256": "5bfb4790c025e553639efc7bfc6a8944ce739f27315d32c5bcf461475ab7b16d",
+  "expected_windows": 830839,
+  "processed_windows": 830839,
+  "expected_patients": 7287,
+  "processed_patients": 7287,
+  "expected_stays": 9894,
+  "processed_stays": 9894,
+  "expected_positive": 47292,
+  "processed_positive": 47292,
+  "all_prediction_windows_reconstructed": true
+}

@@ -1,45 +1,171 @@
-# 投稿底稿實驗與數學審查
+# 投稿底稿與教授建議完成度稽核
 
-審查對象：`paper/TSP_template.tex` 與最新版 `paper/TSP_template_review.pdf`
-審查版：`paper/TSP_template_review.pdf`  
-更新日期：2026-07-11
+更新日期：2026-07-14
 
-## 已修正的重要問題
+稽核範圍：Post-hoc XAI、Clinical Consistency Regularization、SOFA outcome sensitivity、missingness，以及目前主文可支持的宣稱。
 
-1. **新版與舊版結果混用**：移除舊 sequence-only FNN 主要結論，主比較改為 explicit KG-TFNN AUROC 0.6448 / AUPRC 0.1236；full-cohort 與 equal-sample 結果分開報告。
-2. **重複且未完成的 Results 章節**：移除第二個重複章節、`XXXX`、空白 case-study 段落與不完整表格。
-3. **模型數學式與程式不一致**：補 membership normalization、cross-rule normalization、正確 hourly risk、`G in R^(13x12)` explicit-temporal tensor，以及實作中的 output logit。
-4. **Loss 寫漏**：補 class-weighted BCE、`L_cons`、`L_sparse`、`L_drift`、`L_nonneg`，並區分 optimization drift loss 與 reported membership-center drift。
-5. **Training details 不完整**：補 Optuna 30 trials、8 trial epochs、AdamW、batch size、learning rate、regularization coefficients、early stopping、best epoch、GPU/software versions。
-6. **缺少流程描述**：加入 8 步 training / calibration / frozen evaluation pseudocode。
-7. **Outcome 與 cohort 定義不足**：明列 age >= 18、至少 4 個 SOFA components、完整 future horizon、missing-as-normal 與 complete-case sensitivity。
-8. **統計方法混用**：patient-cluster bootstrap、hospital-cluster bootstrap 與 three-seed t intervals 已分開標示。
-9. **主文表格過多**：14 張表重組為 7 張主表，使用 cohort、performance、ablation、sensitivity 與 rule panels。
-10. **缺少投稿圖**：加入 cohort flow、architecture、ROC/PR、calibration/DCA 與 TP/FP/FN patient timelines，共 5 組圖。
-11. **Discussion 結構不足**：末段改為 Contributions、Limitations、Future Work，並降低 deployment-ready 與 causal interpretation 的語氣。
-12. **引用與編譯問題**：修正 bibliography fields 與 cite keys；審查版 13 筆引用均可解析。
-13. **SOFA/NEWS2 可重建性不足**：新增 Supplementary Table S1 完整 SOFA thresholds、source harmonization 與 aggregation notes，以及 Table S2 NEWS2 Scale 1 到 Gaussian centers/sigmas/weights 的實作對照；另揭露 GCS 無 sedation correction 與 heart-rate 41--50 無獨立 fuzzy term。
+本次已逐項比對 `paper/TSP_template.tex`、`paper/Supplementary_Material.tex`、正式實驗輸出與核心模型程式。修改前的原稿已完整備份至 `paper/backups/20260714_151000_before_consistency_alignment/`；主文與補充資料已更新、重新編譯並通過引用與缺圖檢查。
 
-## Feature-Matched Comparator Update
+## 狀態定義
 
-Feature-matched GRU、XGBoost 與 LightGBM 已完成。GRU 使用 24 小時 x 39 channels（13 raw、13 missingness、13 recency），tree models 使用同源 channels 的 deterministic temporal summaries；所有模型使用相同 patient split、200,000 training windows、50,000 validation windows 與完整 test windows。
+- **正式完成**：使用預先鎖定 patient split；equal-sample 僅限 train/validation，test 使用全部 eligible windows；CI 以 patient 為 cluster。
+- **探索性完成**：方法與結果已產生，但使用預先抽樣案例，不能當作 full-cohort confirmatory evidence。
+- **部分完成**：已有部分指標或文字，但比較條件、證據層級或外部驗證尚未完整。
+- **尚未完成**：目前沒有可支持該宣稱的實驗結果。
 
-Matched GRU AUROC 0.6587、LightGBM 0.6904、XGBoost 0.6870，皆高於 KG-TFNN 0.6448。底稿已移除 architecture-superiority claim，改成 predictive performance 與 intrinsic interpretability 的 tradeoff。這是結果修正，不應只放在 limitation。
+## 總結判定
 
-## 仍需作者或外部審查
+| 教授建議 | 判定 | 核心理由 |
+|---|---|---|
+| LightGBM/XGBoost/EBM/KG-TFNN 預測比較 | 正式完成 | Feature-matched tree/GRU 與 KG-TFNN 使用相同 split、train/validation sampling 與完整 test windows |
+| Post-hoc 與 intrinsic explanation quality 比較 | 正式全量完成 | 830,839 MIMIC 與 6,215,890 eICU prediction windows；`formal_full_data=true` |
+| Clinical consistency regularization 的預測與 rule stability ablation | 正式完成 | 4 variants x 3 seeds；full 與 no-consistency 可直接配對 |
+| Consistency violation / risk reversal behavioral audit | 正式全量完成 | 3 seeds x 2 variants，每個模型使用完整 830,839 MIMIC test windows |
+| SOFA outcome-definition / documentation-bias sensitivity | 正式完成 | 完整 830,839 test windows、500 次 patient-cluster bootstrap、common-component/mask analyses |
+| Missingness-only / no-missingness ablation | 正式完成 | 3-seed ensemble、完整 test windows、1,000 次 patient-cluster bootstrap |
+| Missingness Discussion 四種機制 | 完成 | 已明確區分 clinical workflow、physician attention、disease severity 與 monitoring frequency，並避免 causal biomarker 宣稱 |
+| Clinician-validated understandability | 尚未完成 | 沒有 blinded clinician reader study；現有結果只能支持 structural inspectability |
 
-- Guideline-direction alignment 是 investigator-defined model diagnostic，不是 clinician validation；若要主張 clinical interpretability，仍需 blinded clinician adjudication 與 usability assessment。
-- TRIPOD+AI checklist 需在最終排版後填入頁碼。
-- PROBAST+AI 應由未參與建模的方法學者再審一次。
-- 作者貢獻、IRB/waiver 措辭與資料可用性聲明需依目標期刊要求確認。
-- 12/24-hour outcomes 維持 secondary analysis，不應混入 primary 6-hour claim。
+## 1. KG-TFNN 與 Post-hoc XAI
 
-## 編譯驗證
+### 已完成的預測比較
 
-- Output：`paper/TSP_template_review.pdf`
-- Pages：27
-- Main tables：7
-- Main figure groups：5
-- Undefined citations/references：0
-- Placeholder `XXXX` / `??`：0
-- Remaining layout warnings：兩處 1.77 pt 的 rule-table overfull box，屬可忽略的微小排版警告。
+Feature-matched LightGBM、XGBoost 與 GRU 已使用相同 39 hourly channels 的同源資訊、相同 200,000/50,000 train/validation windows，以及完整 MIMIC test windows。正式結果顯示 boosting models 的 discrimination 高於 equal-sample KG-TFNN：
+
+| Model | AUROC | AUPRC | 證據層級 |
+|---|---:|---:|---|
+| LightGBM | 0.6904 | 0.1710 | 正式 feature-matched comparison |
+| XGBoost | 0.6870 | 0.1665 | 正式 feature-matched comparison |
+| KG-TFNN | 0.6448 | 0.1236 | 正式 equal-sample comparison |
+
+正式來源：`outputs/feature_matched_baselines_6h_equal_sample/`、`outputs/explicit_kg_tfnn_paired_comparison_6h/`。
+
+### 正式全量 explanation benchmark
+
+`outputs/posthoc_explainability_comparison_6h/analysis_config.json` 明確記錄：
+
+- `formal_full_data=true`
+- 完整 830,839 個 MIMIC test windows 與 6,215,890 個 eICU external windows
+- 每個 prediction-key window 均由 hourly source 精確重建；patient/stay/label counts 與 SHA-256 均通過稽核
+- MIMIC 每個 window 執行 3 次、1% training-SD perturbation，共 2,492,517 perturbation pairs
+- Explanation continuity 比較同一 ICU stay 內相鄰的 eligible windows，而非抽樣 nearest neighbors
+- EBM 是 13-feature current-state comparator，並非 24-hour feature-matched model
+
+| Model | Stability cosine | Within-stay continuity cosine | 80% attribution 所需變數 | Temporal attribution mass | MIMIC-eICU rank rho |
+|---|---:|---:|---:|---:|---:|
+| LightGBM + TreeSHAP | 0.965 | 0.914 | 6 | 0.865 | 0.885 |
+| XGBoost + TreeSHAP | 0.950 | 0.928 | 7 | 0.852 | 0.967 |
+| EBM, current state | 0.989 | 0.887 | 6 | 0.000 | 0.819 |
+| KG-TFNN | 1.000 | 0.998 | 5 | 0.190 | 0.962 |
+
+目前可以支持的敘述：KG-TFNN 在這個**full-data structural benchmark** 中，對小擾動較穩定、同一 stay 的連續 explanations 較一致、attribution 較稀疏，且輸出可讀 temporal fuzzy rules。Prediction 不是最佳，因此研究定位應是 predictive-performance / intrinsic-inspectability trade-off。
+
+目前不能支持的敘述：
+
+- KG-TFNN 在所有 cross-dataset 指標都最好；XGBoost 的 rank rho 0.967 高於 KG-TFNN 0.962，且 XGBoost/EBM 的 Top-5 Jaccard 為 1.000。
+- Temporal attribution mass 越高必然越可解釋；不同 explanation form 的數值語意不等價。
+- KG-TFNN 已證明比 SHAP 更容易被臨床人員理解。
+- Current-state EBM 與 24-hour KG-TFNN 已達完整 architecture matching。
+
+### 尚缺項目
+
+1. 建立 24-hour feature-matched EBM；目前 EBM 只能作為 current-state additive comparator。
+2. 預先定義跨模型可比較的 complexity 指標。KG-TFNN 已有 mean antecedent count，但 TreeSHAP/EBM 尚無與其同義的 rule complexity。
+3. 若要使用「clinically understandable」而非「human-readable/inspectable」，需要 blinded clinician reader study，評估正確性、理解時間、信心與 inter-rater agreement。
+
+## 2. Clinical Consistency Regularization
+
+### 正式完成部分
+
+正式 3-seed ablation 已比較 temporal FNN without consistency 與 full KG-TFNN。Consistency loss 沒有改善 AUROC/AUPRC，但 Top-10 rule stability 由 0.587 提升為 0.674。
+
+| 指標 | No consistency | Full | Full - no consistency |
+|---|---:|---:|---:|
+| AUROC | 0.6459 | 0.6456 | -0.0003 |
+| AUPRC | 0.1230 | 0.1230 | +0.0001 |
+| Rule stability | 0.587 | 0.674 | +0.087 |
+| Normalized membership drift | 0.222 | 0.224 | +0.002，未改善 |
+| Guideline-risk correlation | 0.536 | 0.528 | -0.008，未改善 |
+
+來源：`outputs/fnn_ablation_6h_equal_sample/ablation_publication_table.csv` 與 `paired_component_effects.csv`。
+
+### 正式 full-test-cohort behavioral audit
+
+| 指標 | No consistency | Full | 判讀 |
+|---|---:|---:|---|
+| Violation rate given worsening | 0.3689 | 0.3677 | -0.0012，幾乎不變 |
+| Consistency penalty | 0.000382 | 0.000332 | 有下降 |
+| Risk reversal frequency | 0.0886 | 0.0905 | +0.0019，略增 |
+| Reversal magnitude median | 0.0889 | 0.0732 | 下降 |
+
+來源：`outputs/clinical_consistency_regularization_6h/`；3 seeds x 2 variants，每個模型均處理完整 830,839 個 MIMIC test windows，總計 4,985,034 次 model-window evaluations，`formal_full_data=true`。
+
+Guideline-direction alignment 在兩組都是 1.0，原因是兩組共用同一套固定 antecedent directions；它不能證明 consistency loss 的效果。現有證據只適合把 consistency regularization 定位為**可能改善跨 seed 規則重現性**的 regularizer，不能宣稱它已降低所有不合理規則、risk reversals 或 membership drift。
+
+模型與 directional perturbation definitions 均維持 frozen。全量結果確認 consistency regularization 的主要正向訊號是 cross-seed rule stability，而非全面降低 behavioral violations。
+
+## 3. SOFA Outcome Definition
+
+本項已正式完成，而且結果顯示 documentation bias **存在且具實質影響**，不是已被排除。
+
+已完成分析：
+
+- Primary：index 與未來 6 小時 SOFA increase >= 2，至少 4 個可觀測 components。
+- Missing-as-normal sensitivity。
+- Six-component complete-case sensitivity。
+- Pairwise common components，要求 index/future 至少 4 個相同可觀測 components。
+- Index 與 primary future maximum 使用相同 component mask。
+- 六個 future hours 全部使用 stable component mask。
+- Respiratory、coagulation、liver、cardiovascular、neurological、renal 的 positive-point contribution。
+
+| Definition | Windows | AUROC | AUPRC |
+|---|---:|---:|---:|
+| Primary | 830,839 | 0.6559 | 0.1309 |
+| Missing components assumed normal | 830,839 | 0.6557 | 0.1314 |
+| Six-component complete case | 176,130 | 0.6237 | 0.0923 |
+| Pairwise common components | 830,609 | 0.6097 | 0.0662 |
+| Same mask at future maximum | 788,385 | 0.6013 | 0.0564 |
+| Stable mask over six future hours | 679,878 | 0.6027 | 0.0594 |
+
+47,292 個 primary positive windows 中，18,426 個（39.0%）在 future maximum 新增了 index hour 未觀測的 component；31,740 個（67.1%）在 pairwise-common label 下仍為 positive。Positive component-point increases 以 renal 46.3% 最高，其次為 neurological 19.1%、cardiovascular 16.4%、respiratory 12.9%、coagulation 3.8%、liver 1.5%。
+
+來源：`outputs/clinical_sensitivity_analyses_6h/` 與 `outputs/sofa_documentation_bias_6h/`。
+
+## 4. Missingness
+
+### 正式實驗
+
+Missingness ablation 已使用相同 split、200,000/50,000 train/validation windows、完整 830,839 test windows、3 seeds 與 1,000 次 patient-cluster bootstrap：
+
+| Model | AUROC | AUPRC | Brier | ECE |
+|---|---:|---:|---:|---:|
+| Full KG-TFNN ensemble | 0.6475 | 0.1244 | 0.0523 | 0.0014 |
+| Without missingness channels | 0.6042 | 0.0879 | 0.0532 | 0.0011 |
+| Missingness-only | 0.5954 | 0.0904 | 0.0532 | 0.0019 |
+
+Full minus no-missingness 的 AUROC 差為 0.0435（95% CI 0.0391--0.0478）；full minus missingness-only 為 0.0518（0.0458--0.0576）。Missingness 本身帶有預測訊號，但 clinical trajectories 與 missingness 結合才有最佳表現。
+
+### Discussion 完整度
+
+主文 Discussion 與 Limitations 已明確指出 missingness 可能同時反映 **clinical workflow、physician attention、disease severity、monitoring frequency** 與病人生理狀態，並將其定位為 context-dependent care-process information，而不是 causal biomarker。此敘述與 missingness-only、no-missingness ablation 及跨資料庫 calibration shift 一致。
+
+## 投稿可用結論
+
+目前主文的保守定位是合理的：boosting models 預測較好；KG-TFNN 提供較穩定、稀疏且可直接檢視的 intrinsic fuzzy-rule representation；consistency loss 主要與 rule stability 相關；SOFA label 與 missingness 都含有 care-process/documentation signal。
+
+大型 full-data 重跑已完成。投稿前仍有兩個解釋性證據層級缺口：
+
+1. Feature-matched temporal EBM 與預先定義的跨模型 complexity metric。
+2. 若要宣稱「clinically understandable」，需 clinician reader study；現有結果只能稱 structural stability、continuity、sparsity 與 intrinsic inspectability。
+
+正式 full-data explanation 與 consistency 結果已寫入主文及 Supplementary S10--S11/S6--S7；舊版 1,000-case nearest-neighbor 敘述已移除。稿件仍應避免「prediction best」與「clinician-validated interpretability」宣稱。
+
+## 本輪稿件一致性修正
+
+- 模型輸入由含糊的 `24 x P` 改為實際的 `24 x 3P`，其中 `P=13`、每小時共 39 channels。
+- Temporal descriptor 定義與 `anfis_model.py` 對齊，包括 current missingness、縮放、soft abnormal duration 與 time-since transform。
+- Explanation benchmark 改為完整 830,839 MIMIC 與 6,215,890 eICU windows；continuity 定義改為同一 stay 的連續 windows。
+- Clinical-consistency behavior 改為每個 seed/variant 全部 830,839 test windows 的正式數字。
+- 補清 1,000-replicate 與 500-replicate clustered bootstrap 的使用範圍。
+- Frozen-test 敘述改為鎖模後產生 prediction files，再重用於 post-lock analyses，且不回饋 tuning/calibration。
+- 兩份 TeX 均成功編譯；主文 33 頁、Supplement 20 頁，無 undefined reference、undefined citation 或 missing figure。

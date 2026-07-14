@@ -1,6 +1,6 @@
 # Knowledge-Guided Temporal FNN
 
-本專案以 MIMIC-IV 建立 ICU 動態惡化預測模型，主要 outcome 為未來 6 小時 SOFA 增加至少 2 分，並以 eICU-CRD 進行外部驗證。目前僅保留最新版資料、程式與正式輸出；共用路徑定義於 `project_config.py`。
+本專案以 MIMIC-IV 建立 ICU 動態惡化預測模型，主要 outcome 為未來 6 小時 SOFA 增加至少 2 分，並以 eICU-CRD 進行外部驗證。目前保留 canonical 資料、最新版程式、正式輸出與必要的重現支援資料；探索性與 superseded 結果均在 `outputs/README.md` 分區標示。共用路徑定義於 `project_config.py`。
 
 > 專案入口：先看「研究快照」與「精選實驗圖」，重現分析時依「Code Map」執行，論文數字以 canonical CSV/JSON 為準，不從圖片手動抄錄。
 
@@ -8,6 +8,7 @@
 
 - [正式實驗資料規則](#正式實驗資料規則)
 - [研究快照](#研究快照)
+- [教授建議與投稿宣稱稽核](docs/manuscript_experiment_audit.md)
 - [專案結構](#專案結構)
 - [Canonical Data](#canonical-data)
 - [Code Map](#code-map)
@@ -26,8 +27,8 @@
 - 投稿用正式實驗必須使用完整 eligible cohort；正式 test evaluation 必須包含固定 test split 的所有 eligible windows。
 - Equal-sample comparison 僅能使用 `comparison_protocol.json` 與 `equal_sample_windows.csv.gz` 中預先鎖定的 train/validation sampling，不能臨時縮小資料；其 test windows 仍須完整。
 - `smoke test`、`max_rows`、`max_stays`、臨時抽樣或少量病人只可檢查 pipeline，結果不得進入主文、Supplement 或正式比較表。
-- 因運算需求使用抽樣的 explanation analysis 必須標示為 exploratory，不能用來宣稱 full-cohort explanation superiority。
-- 每次正式執行需保存 cohort/window counts、split hash、完整命令、seed、checkpoint hash 與 `formal_full_data=true` 稽核欄位。
+- Explanation 與 consistency analyses 亦須重建全部 prediction-key windows；僅允許分批串流計算，不允許縮小分析 cohort。
+- 每次正式執行需保存 cohort/window counts、split hash、完整命令、seed、checkpoint hash 與 `formal_full_data=true` 稽核欄位；總稽核見 `outputs/formal_data_scope_audit_6h/`。
 
 ## 研究快照
 
@@ -36,7 +37,6 @@
 | MIMIC leakage-free SOFA labels | 6 h primary 完成；12/24 h secondary labels 已備妥 | `sofa_scores_hourly.csv` |
 | MIMIC v3 hourly、missingness 與 time-since features | 完成 | `model_hourly_features_v3.csv` |
 | Patient-level split 與 equal-sample protocol | 完成 | `patient_split.csv`, `comparison_protocol.json` |
-| 6 h equal-sample baseline benchmark、獨立 test 與 clustered CI | 完成 | `outputs/advanced_evaluation_6h_equal_sample/` |
 | Explicit temporal features 與 4/6/12/24 h observation sensitivity | 完成 | `outputs/explicit_temporal_observation_sensitivity_6h/` |
 | Explicit-temporal FNN 專屬 Optuna tuning | 完成 | `outputs/explicit_temporal_fnn_tuning_6h/` |
 | eICU harmonization、SOFA labels 與 final frozen-checkpoint external validation | 完成；AUROC 0.6221 | `outputs/eicu_external_validation/final_frozen_model_evaluation/` |
@@ -54,13 +54,15 @@
 | Feature-matched GRU / XGBoost / LightGBM | 完成；相同 39 hourly channels、相同 test windows | `outputs/feature_matched_baselines_6h_equal_sample/` |
 | Raw rule firing 與 activation-threshold sensitivity | 完成；0.01–0.50、current/attention-selected hour | `outputs/raw_rule_firing_6h/` |
 | Cohort denominator、SOFA harmonization、raw/calibrated reporting | 完成 | `outputs/expanded_experiment_reporting_6h/` |
-| LightGBM/XGBoost + TreeSHAP、EBM 與 KG-TFNN explanation benchmark | 探索性完成；目前為 1,000-case sample，正式 full-test-cohort 版本待重跑 | `outputs/posthoc_explainability_comparison_6h/` |
-| Clinical-consistency regularization behavior audit | 探索性完成；3 seeds、1,000-case sample，正式 full-test-cohort 版本待重跑 | `outputs/clinical_consistency_regularization_6h/` |
+| LightGBM/XGBoost + TreeSHAP、EBM 與 KG-TFNN explanation benchmark | 正式全量完成；830,839 MIMIC + 6,215,890 eICU windows | `outputs/posthoc_explainability_comparison_6h/` |
+| Clinical-consistency regularization behavior audit | 正式全量完成；3 seeds x 2 variants x 830,839 windows | `outputs/clinical_consistency_regularization_6h/` |
 | SOFA documentation-bias sensitivity 與器官貢獻 | 完成；common-component labels、complete-case、missing-as-normal | `outputs/sofa_documentation_bias_6h/` |
-| Supplementary Tables S1--S13 / Figures S1--S7 | 完成；membership 與 SOFA documentation 圖已移入主文 | `outputs/supplementary_material/`, `paper/Supplementary_Material.pdf` |
-| 投稿底稿實驗與數學審查 | 完成完整性修訂；analytic-cohort Table 1、clustered CI、raw/calibrated reporting、event definition、SOFA limitations、patient-specific rules | `paper/TSP_template.tex`, `paper/TSP_template.pdf` |
+| Missingness Discussion 四種機制 | 完成；workflow、physician attention、disease severity、monitoring frequency 均已納入並限制 causal 解讀 | `paper/TSP_template.tex`, `docs/manuscript_experiment_audit.md` |
+| Supplementary Tables S1--S13 / Figures S1--S7 | 完成；S10--S11/S6--S7 已重建為正式全量結果 | `outputs/supplementary_material/`, `paper/Supplementary_Material.pdf` |
+| 投稿底稿實驗、數學與一致性審查 | 完成；full-data XAI/consistency、39-channel input、bootstrap 定義與限制均已對齊；原稿有可驗證備份 | `paper/TSP_template.tex`, `paper/backups/20260714_151000_before_consistency_alignment/` |
 | TRIPOD+AI 與 PROBAST+AI project checklist | 完成；投稿頁碼待最終排版 | `docs/TRIPOD_AI_checklist.md`, `docs/PROBAST_AI_checklist.md` |
-| Reproducibility manifest | 完成；環境與關鍵檔案 SHA-256 | `outputs/reproducibility_6h/analysis_manifest.json` |
+| Reproducibility manifest | 完成；環境、關鍵實驗檔案與主文/Supplement TeX SHA-256 | `outputs/reproducibility_6h/analysis_manifest.json` |
+| Formal data-scope audit | 完成；94 checks passed、0 failed | `outputs/formal_data_scope_audit_6h/formal_data_scope_audit.md` |
 
 ## 專案結構
 
@@ -106,6 +108,7 @@ D:\醫資
 | MIMIC SOFA 與 leakage-free outcome | `sofa_score.py`, `sofa_label_utils.py` | `sofa_scores_hourly.csv` |
 | MIMIC hourly/temporal preprocessing | `preprocessing.py`, `temporal_feature_utils.py`, `clinical_data_quality.py` | `model_hourly_features_v3.csv` |
 | Patient split 與 comparison protocol | `patient_split.py`, `comparison_protocol.py` | `patient_split.csv`, `comparison_protocol.json`, `equal_sample_windows.csv.gz` |
+| 共用路徑與資料設定 | `project_config.py` | MIMIC/eICU canonical path definitions |
 | NEWS2 與 clinical-score baselines | `news2_score.py`, `clinical_score_baselines.py` | Clinical comparator predictions |
 | eICU audit、harmonization 與 SOFA | `eicu_data_audit.py`, `eicu_preprocessing.py` | `outputs/eicu_external_validation/eicu_hourly_features.pkl` |
 
@@ -131,14 +134,14 @@ D:\醫資
 | Clinical utility/subgroups | `clinical_sensitivity_analyses.py`, `eicu_hospital_sensitivity.py` | Alarm burden、lead time、subgroups、site heterogeneity |
 | Rule extraction/evaluation | `extract_temporal_fuzzy_rules.py`, `rule_evaluation_framework.py`, `raw_rule_firing_analysis.py`, `patient_case_rule_analysis.py` | Rules、stability、drift、activation、case timelines |
 | SOFA documentation sensitivity | `sofa_documentation_bias_analysis.py` | Common-component outcomes、organ contributions |
-| Exploratory XAI/consistency | `posthoc_explainability_comparison.py`, `clinical_consistency_regularization_analysis.py` | 1,000-case exploratory outputs；full cohort 待重跑 |
+| Full-data XAI/consistency | `posthoc_explainability_comparison.py`, `clinical_consistency_regularization_analysis.py`, `full_data_window_utils.py` | 全部 MIMIC/eICU prediction windows 與 formal cohort audit |
 | eICU frozen validation | `eicu_external_validation.py` | External predictions、metrics、calibration |
 
 ### Manuscript And Reproducibility
 
 | 工作 | Canonical code/file | 主要輸出 |
 |---|---|---|
-| Cohort/Table 1–5/Figure 1–5 | `cohort_tables_figures.py`, `paper_figures.py` | `outputs/manuscript_tables_figures_6h/` |
+| Cohort、Table 1–5 與 manuscript base figures | `cohort_tables_figures.py`, `paper_figures.py` | `outputs/manuscript_tables_figures_6h/` |
 | Supplementary Tables S1–S13/Figures S1–S7 | `build_supplementary_material.py` | `paper/Supplementary_Material.tex/.pdf` |
 | Reporting audit | `expanded_experiment_reporting.py` | `outputs/expanded_experiment_reporting_6h/` |
 | Reproducibility manifest | `reproducibility_manifest.py` | `outputs/reproducibility_6h/analysis_manifest.json` |
@@ -174,6 +177,13 @@ D:\醫資
 # 8. Baselines 與統一評估
 .\env\Scripts\python.exe run_fair_comparison.py --mode equal_sample --horizons 6
 .\env\Scripts\python.exe advanced_model_evaluation.py
+
+# 9. Full-data explanation 與 consistency analyses（無抽樣參數）
+.\env\Scripts\python.exe posthoc_explainability_comparison.py --device cuda
+.\env\Scripts\python.exe clinical_consistency_regularization_analysis.py --device cuda
+
+# 10. 驗證所有 canonical experiments 的資料範圍
+.\env\Scripts\python.exe formal_data_scope_audit.py
 ```
 
 所有模型必須使用相同 `subject_id` split、test windows、predictors 與 outcome。Checkpoint、threshold、calibration 與 hyperparameters 只能由 train/validation 決定；test 僅能在模型定案後使用一次。
@@ -201,21 +211,27 @@ Hospital-clustered sensitivity 的 AUROC 95% CI 為 0.6127–0.6326，AUPRC 95% 
 | Equal-sample paired comparison | `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/advanced_metrics.csv` | `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/figures/` |
 | Feature-matched GRU/trees | `outputs/feature_matched_baselines_6h_equal_sample/` | `outputs/feature_matched_baselines_6h_equal_sample/figures/` |
 | Formal FNN ablation | `outputs/fnn_ablation_6h_equal_sample/ablation_aggregate.csv` | `outputs/fnn_ablation_6h_equal_sample/figures/` |
+| Missingness ablation | `outputs/missingness_ablation_6h_equal_sample/evaluation/missingness_ablation_report.md` | `outputs/missingness_ablation_6h_equal_sample/evaluation/figures/` |
 | Observation sensitivity | `docs/explicit_temporal_observation_sensitivity.md` | `outputs/explicit_temporal_observation_sensitivity_6h/figures/` |
 | SOFA/outcome/clinical utility | `outputs/clinical_sensitivity_analyses_6h/clinical_sensitivity_report.md` | `outputs/clinical_sensitivity_analyses_6h/figures/` |
 | SOFA documentation audit | `outputs/sofa_documentation_bias_6h/sofa_documentation_bias_report.md` | `outputs/sofa_documentation_bias_6h/figures/` |
 | Rule Evaluation Framework | `outputs/rule_evaluation_6h/rule_evaluation_report.md` | `outputs/rule_evaluation_6h/figures/` |
 | Frozen eICU validation | `outputs/eicu_external_validation/final_frozen_model_evaluation/eicu_external_validation_report.md` | `outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
 | eICU site heterogeneity | `outputs/eicu_hospital_sensitivity_6h/eicu_hospital_sensitivity_report.md` | `outputs/eicu_hospital_sensitivity_6h/figures/` |
+| Full-data explanation benchmark | `outputs/posthoc_explainability_comparison_6h/explanation_quality_report.md` | `outputs/posthoc_explainability_comparison_6h/figures/` |
+| Full-data consistency behavior | `outputs/clinical_consistency_regularization_6h/clinical_consistency_report.md` | `outputs/clinical_consistency_regularization_6h/figures/` |
+| Formal data-scope audit | `outputs/formal_data_scope_audit_6h/formal_data_scope_audit.md` | Machine-readable JSON in the same directory |
 
-### Exploratory Results
+### Data-Scope Classification
 
-| 分析 | 限制 | 位置 |
+| 分析 | 實際資料範圍 | 正確定位 |
 |---|---|---|
-| TreeSHAP/EBM/KG-TFNN explanation quality | 1,000 cases/database；`formal_full_data=false` | `outputs/posthoc_explainability_comparison_6h/` |
-| Clinical-consistency behavioral stress test | 1,000 MIMIC cases、3 seeds；`formal_full_data=false` | `outputs/clinical_consistency_regularization_6h/` |
+| Primary KG-TFNN | 3,843,400 train、819,573 validation、830,839 test windows | Full-cohort primary estimate |
+| Equal-sample comparisons/ablations | Prespecified 200,000 train、50,000 validation、完整 830,839 test windows | Fairness/sensitivity estimate，不是 full-cohort training estimate |
+| Explanation benchmark | 完整 830,839 MIMIC 與 6,215,890 eICU windows | Full-data structural explanation analysis；不是 clinician reader study |
+| Consistency behavioral stress test | 每個 seed/variant 完整 830,839 MIMIC windows | Full-test-cohort directional stress test |
 
-探索性結果可協助設計正式分析，但在 full-test-cohort 重跑前不得支撐投稿中的 superiority claim。
+目前沒有 sampled/smoke output 被登錄為 canonical evidence。完整自動稽核為 `94 passed / 0 failed`；equal-sample 與 full-cohort estimates 仍須分開報告。
 
 ### Documents
 
@@ -281,8 +297,8 @@ Site-level estimates與個案圖均為描述性分析；它們不能取代 prosp
 | Supplementary Figure S1 | Raw firing threshold sensitivity | 支援 activation threshold 的 robustness，不占主文篇幅 |
 | Supplementary Figures S2–S3 | MIMIC subgroup 與 eICU hospital heterogeneity | Secondary robustness/site analyses |
 | Supplementary Figures S4–S5 | Case timelines 與 patient-specific raw firing | 補充 Main Figure 7，不重複主文摘要 |
-| Supplementary Figure S6 / Table S10 | TreeSHAP/EBM/KG-TFNN explanation comparison | 目前是 1,000-case exploratory analysis，full cohort 前不升為主文證據 |
-| Supplementary Figure S7 / Table S11 | Consistency behavior | 目前是 exploratory sample，且效果主要限於 cross-seed stability |
+| Supplementary Figure S6 / Table S10 | TreeSHAP/EBM/KG-TFNN explanation comparison | 全量 structural benchmark；EBM 仍是 current-state comparator，且未做 clinician reader validation |
+| Supplementary Figure S7 / Table S11 | Consistency behavior | 每組完整 test cohort；效果主要限於 cross-seed stability，不宣稱全面改善 |
 | Supplementary Tables S1–S2 | SOFA reconstruction、NEWS2-to-fuzzy mapping | 技術細節必要但篇幅大，Supplement 最利於 outcome/model 重建 |
 
 ## 環境
@@ -471,9 +487,9 @@ Table 2 的 missingness 是 LOCF 前的 current-hour raw missingness，不是 fo
 - Rule evaluation：Top-10 mean antecedents 1.44、five-seed Jaccard 0.720、guideline-direction alignment 1.000、median membership-center drift 0.264 initial sigmas。
 - Feature-matched GRU AUROC 0.6587、AUPRC 0.1272；KG-TFNN paired 差分為 -0.0139（95% CI -0.0192 至 -0.0088）與 -0.0036（-0.0085 至 0.0008）。
 - Feature-matched LightGBM AUROC 0.6904、AUPRC 0.1710；XGBoost AUROC 0.6870、AUPRC 0.1665。這些結果不支持 architecture-superiority claim，論文定位改為 predictive performance 與 intrinsic interpretability 的取捨。
-- 在探索性的固定 1,000-window explanation sample 上，KG-TFNN 的 perturbation stability cosine 為 1.000、nearest-trajectory explanation consistency 為 0.979、80% attribution mass 需 5 個變數；LightGBM + TreeSHAP 分別為 0.965、0.408 與 6 個變數。這不是 full-cohort 正式結果，也不是 clinician reader study；完成分批 full-test-cohort 重跑前不得作為 explanation superiority 的最終證據。
-- Cross-dataset global explanation-rank Spearman：KG-TFNN 0.978、XGBoost + TreeSHAP 0.879、EBM 0.846、LightGBM + TreeSHAP 0.797；四者 top-5 Jaccard 均為 0.667，因此不能宣稱 KG-TFNN 在所有跨資料庫穩定性指標皆優於 baselines。
-- Clinical-consistency loss 將 three-seed rule stability 由 0.587 提升至 0.674，但 violation rate 幾乎不變（0.3704 至 0.3698），risk reversal 略增（0.1044 至 0.1059），normalized drift 與 guideline-risk correlation 也未改善。其定位是主要與跨 seed 規則穩定性相關的 regularizer，而非已證實能全面改善臨床一致性。
+- 在完整 830,839-window MIMIC test cohort 上，KG-TFNN 的 perturbation stability cosine 為 1.000、within-stay consecutive-window explanation continuity 為 0.998、80% attribution mass 需 5 個變數；LightGBM + TreeSHAP 分別為 0.965、0.914 與 6 個變數。此結果是 full-data structural benchmark，但仍不是 clinician reader study。
+- 使用完整 eICU external cohort 後，cross-dataset global explanation-rank Spearman：KG-TFNN 0.962、XGBoost + TreeSHAP 0.967、EBM 0.819、LightGBM + TreeSHAP 0.885；top-5 Jaccard 分別為 0.667、1.000、1.000、0.667。因此不能宣稱 KG-TFNN 在所有跨資料庫穩定性指標皆優於 baselines。
+- 每個 seed/variant 均使用完整 830,839 test windows。Clinical-consistency loss 將 three-seed rule stability 由 0.587 提升至 0.674；violation rate 僅由 0.3689 降至 0.3677，risk reversal 由 0.0886 增至 0.0905，normalized drift 由 0.2221 增至 0.2244，guideline-risk correlation 由 0.5362 降至 0.5281。其定位是與跨 seed 規則穩定性相關的 regularizer，而非已證實能全面改善臨床一致性。
 - Primary SOFA positives 中 39.0% 在 future maximum 出現 index hour 未觀測的 component；pairwise common-component definition 保留 67.1% primary positives。common-component AUROC/AUPRC 為 0.6097/0.0662，顯示 outcome 對 documentation availability 有實質敏感性，不能宣稱 label 已排除 documentation bias。
 - Primary positive windows 的 observed positive component-point increases 主要來自 renal 46.3%、neurological 19.1%、cardiovascular 16.4%、respiratory 12.9%、coagulation 3.8%、liver 1.5%；這是 component-point 分解，不是 causal attribution。
 - Guideline-direction alignment 僅衡量模型規則是否沿預先指定 NEWS2/SOFA 方向，不是 clinician-validated interpretability。

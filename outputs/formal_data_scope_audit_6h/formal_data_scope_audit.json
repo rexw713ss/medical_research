@@ -1,0 +1,695 @@
+{
+  "generated_utc": "2026-07-14T07:22:24.188904+00:00",
+  "status": "passed",
+  "primary_outcome": "future 6-hour SOFA increase >=2",
+  "scope_policy": {
+    "primary_model": "all eligible train, validation, and test windows",
+    "equal_sample_sensitivity": "prespecified 200,000 train and 50,000 validation windows; all 830,839 test windows",
+    "external_validation": "all 6,215,890 eligible eICU prediction windows; no refitting or recalibration",
+    "smoke_results_allowed_in_formal_outputs": false
+  },
+  "expected_counts": {
+    "mimic_full": {
+      "train_windows": 3843400,
+      "validation_windows": 819573,
+      "test_windows": 830839,
+      "test_patients": 7287,
+      "test_stays": 9894,
+      "test_positive": 47292
+    },
+    "equal_sample": {
+      "train_windows": 200000,
+      "validation_windows": 50000,
+      "test_windows": 830839,
+      "test_positive": 47292
+    },
+    "eicu_full": {
+      "windows": 6215890,
+      "patients": 80239,
+      "stays": 99262,
+      "positive": 294949
+    }
+  },
+  "checks_passed": 94,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "name": "no runtime truncation: outputs/explicit_temporal_fnn_tuning_6h/tuning_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/explicit_temporal_fnn_formal_6h/seed_42/train_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/final_test_evaluation_6h/raw_model_evaluation/evaluation_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/feature_matched_baselines_6h_equal_sample/experiment_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/fnn_ablation_6h_equal_sample/ablation_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/missingness_ablation_6h_equal_sample/ablation_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/explicit_temporal_observation_sensitivity_6h/experiment_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/temporal_rule_extraction_6h/rule_extraction_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/eicu_external_validation/eicu_preprocessing_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/eicu_external_validation/final_frozen_model_evaluation/external_validation_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/posthoc_explainability_comparison_6h/analysis_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "no runtime truncation: outputs/clinical_consistency_regularization_6h/analysis_config.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": "Zero and null mean unlimited; equal-sample membership is checked separately."
+    },
+    {
+      "name": "primary FNN full train windows",
+      "passed": true,
+      "observed": 3843400,
+      "expected": 3843400,
+      "note": ""
+    },
+    {
+      "name": "primary FNN full validation windows",
+      "passed": true,
+      "observed": 819573,
+      "expected": 819573,
+      "note": ""
+    },
+    {
+      "name": "primary FNN full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "primary FNN test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "frozen final evaluation test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "frozen final evaluation test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired comparison identical test keys/outcomes",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "paired explicit_kg_tfnn validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired explicit_kg_tfnn full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired explicit_kg_tfnn test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired explicit_kg_tfnn test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired logistic_regression validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired logistic_regression full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired logistic_regression test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired logistic_regression test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired ebm validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired ebm full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired ebm test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired ebm test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired gru validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired gru full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired gru test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired gru test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost_matched validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost_matched full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost_matched test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired xgboost_matched test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired lightgbm_matched validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired lightgbm_matched full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired lightgbm_matched test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired lightgbm_matched test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "paired gru_matched validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "paired gru_matched full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "paired gru_matched test patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "paired gru_matched test positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "outputs/explicit_temporal_fnn_tuning_6h/cohort_audit.json train windows",
+      "passed": true,
+      "observed": 200000,
+      "expected": 200000,
+      "note": ""
+    },
+    {
+      "name": "outputs/explicit_temporal_fnn_tuning_6h/cohort_audit.json validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/cohort_audit.json train windows",
+      "passed": true,
+      "observed": 200000,
+      "expected": 200000,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/cohort_audit.json validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/cohort_audit.json full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/sequence_cohort_audit.json train windows",
+      "passed": true,
+      "observed": 200000,
+      "expected": 200000,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/sequence_cohort_audit.json validation windows",
+      "passed": true,
+      "observed": 50000,
+      "expected": 50000,
+      "note": ""
+    },
+    {
+      "name": "outputs/feature_matched_baselines_6h_equal_sample/sequence_cohort_audit.json full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "variant cohort-audit file count: outputs/fnn_ablation_6h_equal_sample/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": 12,
+      "expected": 12,
+      "note": ""
+    },
+    {
+      "name": "all variant cohorts match protocol: outputs/fnn_ablation_6h_equal_sample/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "variant cohort-audit file count: outputs/missingness_ablation_6h_equal_sample/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": 6,
+      "expected": 6,
+      "note": ""
+    },
+    {
+      "name": "all variant cohorts match protocol: outputs/missingness_ablation_6h_equal_sample/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "variant cohort-audit file count: outputs/explicit_temporal_observation_sensitivity_6h/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": 15,
+      "expected": 15,
+      "note": ""
+    },
+    {
+      "name": "all variant cohorts match protocol: outputs/explicit_temporal_observation_sensitivity_6h/seed_*/**/cohort_audit.json",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "missingness comparison audit status",
+      "passed": true,
+      "observed": "passed",
+      "expected": "passed",
+      "note": ""
+    },
+    {
+      "name": "missingness comparison full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "missingness comparison identical windows/outcomes",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "observation-window run count",
+      "passed": true,
+      "observed": 15,
+      "expected": 15,
+      "note": ""
+    },
+    {
+      "name": "all observation-window runs use full test cohort",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "post-hoc XAI formal_full_data",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "post-hoc MIMIC windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "post-hoc MIMIC patients",
+      "passed": true,
+      "observed": 7287,
+      "expected": 7287,
+      "note": ""
+    },
+    {
+      "name": "post-hoc MIMIC positives",
+      "passed": true,
+      "observed": 47292,
+      "expected": 47292,
+      "note": ""
+    },
+    {
+      "name": "post-hoc eICU windows",
+      "passed": true,
+      "observed": 6215890,
+      "expected": 6215890,
+      "note": ""
+    },
+    {
+      "name": "post-hoc eICU patients",
+      "passed": true,
+      "observed": 80239,
+      "expected": 80239,
+      "note": ""
+    },
+    {
+      "name": "post-hoc eICU positives",
+      "passed": true,
+      "observed": 294949,
+      "expected": 294949,
+      "note": ""
+    },
+    {
+      "name": "post-hoc all prediction windows reconstructed",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "post-hoc model rows",
+      "passed": true,
+      "observed": 4,
+      "expected": 4,
+      "note": ""
+    },
+    {
+      "name": "all post-hoc models use full cohorts",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "legacy sampled XAI caches removed",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    },
+    {
+      "name": "consistency audit formal_full_data",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "consistency windows per seed/variant",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "consistency model passes",
+      "passed": true,
+      "observed": 6,
+      "expected": 6,
+      "note": ""
+    },
+    {
+      "name": "consistency reconstructed windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "consistency seed/variant rows",
+      "passed": true,
+      "observed": 6,
+      "expected": 6,
+      "note": ""
+    },
+    {
+      "name": "all consistency seed/variant passes use full test",
+      "passed": true,
+      "observed": 0,
+      "expected": 0,
+      "note": ""
+    },
+    {
+      "name": "raw-rule firing full test windows",
+      "passed": true,
+      "observed": 830839,
+      "expected": 830839,
+      "note": ""
+    },
+    {
+      "name": "eICU external windows",
+      "passed": true,
+      "observed": 6215890,
+      "expected": 6215890,
+      "note": ""
+    },
+    {
+      "name": "eICU external patients",
+      "passed": true,
+      "observed": 80239,
+      "expected": 80239,
+      "note": ""
+    },
+    {
+      "name": "eICU external stays",
+      "passed": true,
+      "observed": 99262,
+      "expected": 99262,
+      "note": ""
+    },
+    {
+      "name": "eICU external inference windows",
+      "passed": true,
+      "observed": 6215890,
+      "expected": 6215890,
+      "note": ""
+    },
+    {
+      "name": "eICU no fitting",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "note": ""
+    },
+    {
+      "name": "no smoke-test output directories",
+      "passed": true,
+      "observed": [],
+      "expected": [],
+      "note": ""
+    }
+  ]
+}

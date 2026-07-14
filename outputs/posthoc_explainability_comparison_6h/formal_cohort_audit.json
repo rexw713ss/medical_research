@@ -1,0 +1,30 @@
+{
+  "MIMIC-IV": {
+    "database": "MIMIC-IV",
+    "prediction_path": "D:\\\u91ab\u8cc7\\outputs\\explicit_kg_tfnn_paired_comparison_6h\\inputs\\lightgbm_matched\\test_predictions.csv.gz",
+    "prediction_sha256": "8980c96da30451676e18762b2f1e8834af302844ee16f78b424205b25ec204ab",
+    "expected_windows": 830839,
+    "processed_windows": 830839,
+    "expected_patients": 7287,
+    "processed_patients": 7287,
+    "expected_stays": 9894,
+    "processed_stays": 9894,
+    "expected_positive": 47292,
+    "processed_positive": 47292,
+    "all_prediction_windows_reconstructed": true
+  },
+  "eICU-CRD": {
+    "database": "eICU-CRD",
+    "prediction_path": "D:\\\u91ab\u8cc7\\outputs\\eicu_external_validation\\final_frozen_model_evaluation\\eicu_external_predictions.csv.gz",
+    "prediction_sha256": "384f920ddce805a00a292feb739a34b8db0e4608a5ee595207c929ed6987969c",
+    "expected_windows": 6215890,
+    "processed_windows": 6215890,
+    "expected_patients": 80239,
+    "processed_patients": 80239,
+    "expected_stays": 99262,
+    "processed_stays": 99262,
+    "expected_positive": 294949,
+    "processed_positive": 294949,
+    "all_prediction_windows_reconstructed": true
+  }
+}

@@ -161,23 +161,23 @@
 | FN | 2 | IF pao2_fio2 IS very_low AND fio2 IS high_support THEN deterioration risk increases | 0.1544 | 0.060 | Yes |
 | FN | 3 | IF lactate IS high AND map IS low THEN deterioration risk increases | 0.0036 | 0.316 | No |
 
-## Supplementary Table S10. Exploratory structural explanation-quality comparison on the prespecified 1,000-case sample.
+## Supplementary Table S10. Full-data structural explanation-quality comparison on 830,839 MIMIC-IV and 6,215,890 eICU prediction windows.
 
-| Model | AUROC / AUPRC | Stability cosine / top-5 | Neighbor consistency cosine / top-5 | Features for 80% mass, median [IQR] | Temporal mass | Cross-database rho / top-5 | Explanation output |
+| Model | AUROC / AUPRC | Stability cosine / top-5 | Within-stay continuity cosine / top-5 | Features for 80% mass, median [IQR] | Temporal mass | Cross-database rho / top-5 | Explanation output |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| LightGBM + TreeSHAP | 0.6904 / 0.1710 | 0.965 / 0.776 | 0.408 / 0.407 | 6 [5-7] | 0.865 | 0.797 / 0.667 | Signed feature attributions |
-| XGBoost + TreeSHAP | 0.6870 / 0.1665 | 0.944 / 0.733 | 0.467 / 0.421 | 7 [6-7] | 0.845 | 0.879 / 0.667 | Signed feature attributions |
-| EBM (current state) | 0.6072 / 0.0891 | 0.982 / 0.905 | 0.484 / 0.482 | 6 [6-7] | 0.000 | 0.846 / 0.667 | Additive feature/interaction terms |
-| KG-TFNN | 0.6448 / 0.1236 | 1.000 / 0.997 | 0.979 / 0.746 | 5 [5-5] | 0.188 | 0.978 / 0.667 | Temporal IF-THEN rules |
+| LightGBM + TreeSHAP | 0.6904 / 0.1710 | 0.965 / 0.812 | 0.914 / 0.706 | 6 [6-7] | 0.865 | 0.885 / 0.667 | Signed feature attributions |
+| XGBoost + TreeSHAP | 0.6870 / 0.1665 | 0.950 / 0.770 | 0.928 / 0.720 | 7 [6-7] | 0.852 | 0.967 / 1.000 | Signed feature attributions |
+| EBM (current state) | 0.6072 / 0.0891 | 0.989 / 0.931 | 0.887 / 0.756 | 6 [6-7] | 0.000 | 0.819 / 1.000 | Additive feature/interaction terms |
+| KG-TFNN | 0.6448 / 0.1236 | 1.000 / 0.995 | 0.998 / 0.934 | 5 [4-5] | 0.190 | 0.962 / 0.667 | Temporal IF-THEN fuzzy rules |
 
-## Supplementary Table S11. Exploratory clinical-consistency behavior on the 1,000-case sample (mean across three seeds).
+## Supplementary Table S11. Full-test-cohort clinical-consistency behavior on 830,839 windows per seed and model variant (mean across three seeds).
 
 | Variant | Violation given worsening | Consistency penalty | Risk reversal | Reversal magnitude | Rule stability | Normalized drift | Guideline-risk rho | Direction alignment |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Temporal FNN without consistency loss | 0.370 | 0.000411 | 0.104 | 0.107 | 0.587 | 0.222 | 0.536 | 1.000 |
-| Full KG-TFNN | 0.370 | 0.000359 | 0.106 | 0.090 | 0.674 | 0.224 | 0.528 | 1.000 |
+| Temporal FNN without consistency loss | 0.369 | 0.000382 | 0.089 | 0.089 | 0.587 | 0.222 | 0.536 | 1.000 |
+| Full KG-TFNN | 0.368 | 0.000332 | 0.091 | 0.073 | 0.674 | 0.224 | 0.528 | 1.000 |
 
-## Supplementary Table S12. SOFA outcome-definition and documentation-availability sensitivity with patient-clustered 95% confidence intervals.
+## Supplementary Table S12. SOFA outcome-definition and documentation-availability sensitivity with 500-replicate patient-clustered 95% confidence intervals.
 
 | Outcome definition | Patients / windows | Positive, n (%) | AUROC (95% CI) | AUPRC (95% CI) | Brier (95% CI) |
 | --- | --- | --- | --- | --- | --- |
@@ -206,6 +206,6 @@
 - Figure S3: eICU hospital-level heterogeneity.
 - Figure S4: selected true-positive, false-positive, and false-negative case timelines.
 - Figure S5: patient-specific raw cross-rule firing over each 24-hour observation window.
-- Figure S6: explanation stability, local consistency, sparsity, and cross-database rank stability.
+- Figure S6: explanation stability, within-stay trajectory continuity, sparsity, and cross-database rank stability.
 - Figure S7: clinical-consistency behavior before and after consistency regularization.
 - Membership functions and SOFA documentation sensitivity were promoted to the main manuscript.

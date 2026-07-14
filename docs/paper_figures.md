@@ -1,46 +1,45 @@
 # 論文圖表清單
 
-所有正式圖表同時保留 300 dpi PNG 與向量 PDF。
+更新日期：2026-07-14
 
-主文圖表以 6 h primary outcome 為準；12/24 h outcome figures 僅放 secondary 或 supplementary material。
+正式圖表同時保留 PNG 預覽與向量 PDF。數值必須來自 canonical CSV/JSON，不可從圖片手動抄錄。Primary outcome 固定為未來 6 小時 SOFA increase >= 2。
 
-## 已產生
+## Main Figures
 
-| 圖表 | 位置 |
-|---|---|
-| Optuna optimization history、parameter association | `outputs/explicit_temporal_fnn_tuning_6h/figures/` |
-| Full-cohort training history | `outputs/explicit_temporal_fnn_formal_6h/seed_42/figures/` |
-| Frozen final-model ROC、PR、calibration、DCA、risk strata | `outputs/final_test_evaluation_6h/advanced/figures/` |
-| 正式消融 predictive performance、calibration、component effects、rule quality | `outputs/fnn_ablation_6h_equal_sample/figures/` |
-| Observation-window sensitivity、explicit temporal coefficients | `outputs/explicit_temporal_observation_sensitivity_6h/figures/` |
-| Baseline ROC、PR、calibration、DCA、risk strata | `outputs/advanced_evaluation_6h_equal_sample/figures/` |
-| Explicit KG-TFNN paired ROC、PR、calibration、DCA、risk strata | `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/figures/` |
-| SOFA-definition sensitivity、event-level alarm burden、MIMIC subgroup forest | `outputs/clinical_sensitivity_analyses_6h/figures/` |
-| eICU hospital-level heterogeneity | `outputs/eicu_hospital_sensitivity_6h/figures/` |
-| Rule membership before/after、TP/FP/FN timelines | `outputs/rule_evaluation_6h/figures/` |
-| Final eICU external ROC/PR、calibration、risk strata | `outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
-| Figure 1 cohort flow、Figure 2 architecture、Figure 3 calibration、Figure 4 DCA、Figure 5 timelines | `outputs/manuscript_tables_figures_6h/figures/` |
-| Table 1–5 publication CSV 與 Markdown | `outputs/manuscript_tables_figures_6h/`, `adult_cohort_manuscript_artifacts.md` |
+| Figure | 內容 | Canonical source |
+|---|---|---|
+| Figure 1 | MIMIC-IV / eICU cohort flow | `outputs/manuscript_tables_figures_6h/figures/figure_1_cohort_flow.*` |
+| Figure 2 | KG-TFNN system architecture | `outputs/manuscript_tables_figures_6h/figures/figure_2_system_architecture.*` |
+| Figure 3 | Membership functions before/after training | `outputs/rule_evaluation_6h/figures/` |
+| Figure 4 | Equal-sample ROC / PR curves | `outputs/explicit_kg_tfnn_paired_comparison_6h/evaluation/figures/` |
+| Figure 5 | Frozen-model calibration / DCA | `outputs/final_test_evaluation_6h/advanced/figures/`、`outputs/eicu_external_validation/final_frozen_model_evaluation/figures/` |
+| Figure 6 | SOFA documentation-availability sensitivity | `outputs/sofa_documentation_bias_6h/figures/sofa_documentation_bias_sensitivity.*` |
+| Figure 7 | TP / FP / FN patient timelines | `outputs/manuscript_tables_figures_6h/figures/figure_5_patient_timeline_activated_rules.*` |
 
-## Primary Evaluation 尚待產生
+## Main Tables
 
-- Fixed 90%/95% specificity operating-point figure；數值與 CI 已完成於 `fixed_specificity_metrics.csv` 與 final report。
-- Full-cohort versus equal-sample sample-size sensitivity figure。
+| Table | 內容 | Canonical source |
+|---|---|---|
+| Table 1 | Cohort characteristics、windows、pre-LOCF missingness | `outputs/manuscript_tables_figures_6h/` |
+| Table 2 | Primary predictive performance | `outputs/final_test_evaluation_6h/`、`outputs/explicit_kg_tfnn_paired_comparison_6h/` |
+| Table 3 | Ablation 與 full-data structural explanation panel | `outputs/fnn_ablation_6h_equal_sample/`、`outputs/posthoc_explainability_comparison_6h/` |
+| Table 4 | Observation-window / SOFA sensitivity | `outputs/explicit_temporal_observation_sensitivity_6h/`、`outputs/clinical_sensitivity_analyses_6h/` |
+| Table 5 | Representative temporal fuzzy rules | `outputs/temporal_rule_extraction_6h/` |
+| Table 6 | Rule Evaluation Framework | `outputs/rule_evaluation_6h/` |
+| Table 7 | Supported frozen-model rule inventory | `outputs/temporal_rule_extraction_6h/` |
 
-## 消融與規則圖
+## Supplementary
 
-- 四組消融 AUROC/AUPRC 與 rule-quality comparison已產生。
-- Membership functions before/after training已產生。
-- Temporal coefficient heatmap。
-- Top-K rule stability across seeds。
-- True-positive、false-positive、false-negative patient timelines已產生。
+- Tables S1--S13 與 Figures S1--S7 的索引：`outputs/supplementary_material/supplementary_material.md`。
+- Raw firing：`outputs/raw_rule_firing_6h/figures/`。
+- MIMIC subgroup：`outputs/clinical_sensitivity_analyses_6h/figures/`。
+- eICU hospital heterogeneity：`outputs/eicu_hospital_sensitivity_6h/figures/`。
+- Patient-specific raw firing：`outputs/rule_evaluation_6h/figures/`。
+- Post-hoc XAI comparison：`outputs/posthoc_explainability_comparison_6h/figures/`；完整 830,839 MIMIC 與 6,215,890 eICU windows。
+- Consistency behavioral audit：`outputs/clinical_consistency_regularization_6h/figures/`；3 seeds x 2 variants，每模型完整 830,839 MIMIC windows。
 
-## Cohort 與 External Validation
+## Pending Figure-Level Evidence
 
-- MIMIC/eICU cohort flow diagram已產生。
-- MIMIC versus eICU missingness/domain-shift heatmap。
-- Age、sex、ethnicity、ICU type、current SOFA subgroup forest plot 已產生。
-- Hospital-level external performance distribution 已產生。
-- Internal/external decision curve已產生；lead-time distribution 尚待整理。
-
-圖表數值必須來自固定 predictions 與正式 evaluation CSV，不可從圖片手動抄錄。
+- Figure S6 已完成 full-data structural benchmark，但 current-state EBM 並非 24-hour feature-matched comparator，且不同 explanation forms 不代表相同語意。
+- Figure S7 已完成 full-test-cohort directional stress test；結果只支持 stability 改善，不支持全面 clinical-consistency 改善。
+- Clinician-reader understandability figure/table 尚未完成，除非另行執行 blinded reader study。

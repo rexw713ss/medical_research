@@ -1,6 +1,6 @@
 # 實驗狀態
 
-更新日期：2026-07-13
+更新日期：2026-07-14
 
 ## 研究主軸
 
@@ -28,11 +28,12 @@
 | Feature-matched GRU、XGBoost、LightGBM | 完成；相同資訊、sample 與 test windows | `outputs/feature_matched_baselines_6h_equal_sample/` |
 | Raw rule firing / activation threshold sensitivity | 完成 | `outputs/raw_rule_firing_6h/` |
 | Cohort、SOFA、calibration、alarm/site reporting audit | 完成 | `outputs/expanded_experiment_reporting_6h/` |
-| LightGBM/XGBoost + TreeSHAP、EBM、KG-TFNN explanation comparison | 探索性完成；1,000-case sample，正式 full-test-cohort 待重跑 | `outputs/posthoc_explainability_comparison_6h/` |
-| Clinical-consistency regularization behavior audit | 探索性完成；3 seeds、1,000-case sample，正式 full-test-cohort 待重跑 | `outputs/clinical_consistency_regularization_6h/` |
+| LightGBM/XGBoost + TreeSHAP、EBM、KG-TFNN explanation comparison | 正式全量完成；830,839 MIMIC + 6,215,890 eICU windows | `outputs/posthoc_explainability_comparison_6h/` |
+| Clinical-consistency regularization behavior audit | 正式全量完成；3 seeds x 2 variants x 830,839 windows | `outputs/clinical_consistency_regularization_6h/` |
+| Formal data-scope audit | 完成；94 checks passed、0 failed | `outputs/formal_data_scope_audit_6h/` |
 | SOFA documentation-availability sensitivity 與 organ contribution | 完成；500 次 patient-cluster bootstrap | `outputs/sofa_documentation_bias_6h/` |
-| Main Figures 1--7 / Supplementary Tables S1--S13 / Figures S1--S7 | 完成；membership 與 SOFA documentation 圖已移入主文 | `paper/TSP_template.pdf`, `paper/Supplementary_Material.pdf` |
-| 投稿底稿整合與數學審查 | 完成第一輪；7 tables、5 figures、pseudocode | `paper/TSP_template.tex`, `paper/TSP_template_review.pdf` |
+| Main Figures 1--7 / Supplementary Tables S1--S13 / Figures S1--S7 | 完成；S10--S11/S6--S7 已換入正式全量結果 | `paper/TSP_template.pdf`, `paper/Supplementary_Material.pdf` |
+| 投稿底稿整合、數學與實驗一致性審查 | 完成；原稿已備份，兩份 TeX 編譯通過 | `paper/TSP_template.tex`, `paper/backups/20260714_151000_before_consistency_alignment/` |
 | TRIPOD+AI / PROBAST+AI 自評 | 完成初稿 | `docs/TRIPOD_AI_checklist.md`, `docs/PROBAST_AI_checklist.md` |
 
 ## 已鎖定結果
@@ -44,18 +45,17 @@
 - Frozen eICU：AUROC 0.6221，AUPRC 0.0922。
 - SOFA complete-case sensitivity：176,130 windows，AUROC 0.6237，AUPRC 0.0923。
 - Pairwise common-component SOFA sensitivity：830,609 windows，AUROC 0.6097，AUPRC 0.0662；保留 67.1% primary positives。
-- KG-TFNN explanation stability / nearest-neighbor consistency：1.000 / 0.979；LightGBM + TreeSHAP：0.965 / 0.408。這是 structural benchmark，不是 clinician validation。
-- Consistency loss 的 three-seed rule stability 由 0.587 增至 0.674；violation、risk reversal、drift 與 guideline-risk correlation 未呈現一致改善。
+- 完整 MIMIC test cohort 的 KG-TFNN explanation stability / within-stay trajectory continuity：1.000 / 0.998；LightGBM + TreeSHAP：0.965 / 0.914。這是 structural benchmark，不是 clinician validation。
+- 完整 MIMIC test cohort上，consistency loss 的 three-seed rule stability 由 0.587 增至 0.674；violation 0.3689 至 0.3677，risk reversal 0.0886 至 0.0905，drift 0.2221 至 0.2244，guideline-risk correlation 0.5362 至 0.5281，未呈現一致改善。
 - Event-level 90% specificity：sensitivity 0.3434，48.23 false alerts/100 patient-days，median lead time 3 hours。
 - Event-level 95% specificity：sensitivity 0.2380，24.30 false alerts/100 patient-days，median lead time 2 hours。
 
 ## 投稿前仍需處理
 
-1. 將 explanation-quality comparison 與 consistency behavioral audit 改為分批 full-test-cohort 執行；目前 1,000-case 結果只能標示 exploratory。
+1. Explanation benchmark 若要做更強的 architecture-matched comparison，需補 24-hour feature-matched EBM 與預先定義的跨模型 complexity metric。
 2. 在最終排版後補 TRIPOD+AI 頁碼，並請臨床與方法學專家獨立審查 PROBAST+AI、rules 與 case timelines。
-3. 公開版本需封存 package versions、configs、split/protocol hashes 與 checkpoint hash。
-4. 完成期刊格式、作者貢獻、補充資料與英文語言校閱。
-5. 若資源允許，進行 prospective workflow/alarm usability study；這不是目前 retrospective manuscript 的完成條件。
+3. 完成期刊格式、作者貢獻、資料擷取日期、protocol registration/PPI statement 與英文語言校閱。
+4. 若資源允許，進行 prospective workflow/alarm usability study；這不是目前 retrospective manuscript 的完成條件。
 
 ## 報告規則
 
@@ -65,3 +65,4 @@
 - eICU 為 frozen external validation，不可用於主模型 fitting 或 recalibration。
 - Guideline-direction alignment 只代表 prespecified NEWS2/SOFA direction alignment，不是獨立臨床驗證或 clinician-validated interpretability。
 - Smoke-test 或臨時 sample 結果不得進入正式表圖；正式 test 結果必須使用完整 eligible test windows。
+- `equal_sample` 是預先鎖定的公平比較敏感度分析，不可寫成 full-cohort training；其 test evaluation 仍為完整 830,839 windows。

@@ -355,11 +355,11 @@ def supplementary_result_tables() -> list[tuple[pd.DataFrame, list[str], str, st
             f"{c:.3f} / {j:.3f}"
             for c, j in zip(explanations.stability_cosine_mean, explanations.stability_top5_jaccard_mean)
         ],
-        "Neighbor consistency cosine / top-5": [
+        "Within-stay continuity cosine / top-5": [
             f"{c:.3f} / {j:.3f}"
             for c, j in zip(
-                explanations.neighbor_consistency_cosine_mean,
-                explanations.neighbor_consistency_top5_jaccard_mean,
+                explanations.trajectory_consistency_cosine_mean,
+                explanations.trajectory_consistency_top5_jaccard_mean,
             )
         ],
         "Features for 80% mass, median [IQR]": [
@@ -456,9 +456,9 @@ def supplementary_result_tables() -> list[tuple[pd.DataFrame, list[str], str, st
         (rule_summary, ["5.0cm", "4.0cm", "8.0cm"], "Rule evaluation framework results.", "tab:s7_rule_eval"),
         (threshold_table, ["3.0cm", "2.5cm", "2.5cm", "4.0cm", "4.5cm"], "Raw rule-firing activation-threshold sensitivity.", "tab:s8_activation"),
         (case_table, ["1.4cm", "1.2cm", "11.0cm", "2.0cm", "1.8cm", "2.2cm"], "Patient-specific current-hour cross-rule firing for the prespecified TP, FP, and FN cases.", "tab:s9_case_rules"),
-        (explanation_table, ["3.0cm", "2.4cm", "3.1cm", "3.4cm", "3.3cm", "2.0cm", "2.9cm", "3.7cm"], "Exploratory structural explanation-quality comparison on the prespecified 1,000-case sample.", "tab:s10_explanations"),
-        (consistency_table, ["4.0cm", "2.8cm", "2.5cm", "2.2cm", "2.4cm", "2.2cm", "2.4cm", "2.5cm", "2.4cm"], "Exploratory clinical-consistency behavior on the 1,000-case sample (mean across three seeds).", "tab:s11_consistency"),
-        (sofa_sensitivity_table, ["5.1cm", "3.1cm", "3.0cm", "4.0cm", "4.0cm", "4.2cm"], "SOFA outcome-definition and documentation-availability sensitivity with patient-clustered 95% confidence intervals.", "tab:s12_sofa_sensitivity"),
+        (explanation_table, ["3.0cm", "2.4cm", "3.1cm", "3.4cm", "3.3cm", "2.0cm", "2.9cm", "3.7cm"], "Full-data structural explanation-quality comparison on 830,839 MIMIC-IV and 6,215,890 eICU prediction windows.", "tab:s10_explanations"),
+        (consistency_table, ["4.0cm", "2.8cm", "2.5cm", "2.2cm", "2.4cm", "2.2cm", "2.4cm", "2.5cm", "2.4cm"], "Full-test-cohort clinical-consistency behavior on 830,839 windows per seed and model variant (mean across three seeds).", "tab:s11_consistency"),
+        (sofa_sensitivity_table, ["5.1cm", "3.1cm", "3.0cm", "4.0cm", "4.0cm", "4.2cm"], "SOFA outcome-definition and documentation-availability sensitivity with 500-replicate patient-clustered 95% confidence intervals.", "tab:s12_sofa_sensitivity"),
         (organ_table, ["3.4cm", "4.5cm", "4.5cm", "3.5cm", "5.0cm"], "Observed SOFA component contributions among primary positive windows.", "tab:s13_organ_contributions"),
     ]
 
@@ -496,7 +496,7 @@ def write_markdown(sofa: pd.DataFrame, mapping: pd.DataFrame) -> None:
         "- Figure S3: eICU hospital-level heterogeneity.",
         "- Figure S4: selected true-positive, false-positive, and false-negative case timelines.",
         "- Figure S5: patient-specific raw cross-rule firing over each 24-hour observation window.",
-        "- Figure S6: explanation stability, local consistency, sparsity, and cross-database rank stability.",
+        "- Figure S6: explanation stability, within-stay trajectory continuity, sparsity, and cross-database rank stability.",
         "- Figure S7: clinical-consistency behavior before and after consistency regularization.",
         "- Membership functions and SOFA documentation sensitivity were promoted to the main manuscript.",
     ])
@@ -554,11 +554,11 @@ def write_latex(sofa: pd.DataFrame, mapping: pd.DataFrame) -> None:
 \end{figure}
 \begin{figure}[H]\centering
 \includegraphics[width=0.94\textwidth]{../outputs/posthoc_explainability_comparison_6h/figures/explanation_quality_comparison.pdf}
-\caption{Exploratory structural explanation-quality comparison. Stability uses three independent 1\% training-standard-deviation perturbations; local consistency compares nearest trajectory neighbors. The balanced 1,000-case sample is not a formal full-cohort analysis and is not used to estimate population-level predictive performance.}\label{fig:s6_explanations}
+\caption{Full-data structural explanation-quality comparison. Stability uses three independent 1\% training-standard-deviation perturbations over all 830,839 MIMIC-IV test windows; trajectory continuity compares consecutive eligible windows within the same ICU stay. Cross-database quantities use all 6,215,890 eligible eICU windows.}\label{fig:s6_explanations}
 \end{figure}
 \begin{figure}[H]\centering
 \includegraphics[width=0.94\textwidth]{../outputs/clinical_consistency_regularization_6h/figures/consistency_regularization_effects.pdf}
-\caption{Exploratory clinical-consistency behavior on the 1,000-case sample with and without consistency regularization across three random seeds. Lower is better for violation, reversal, and drift; higher is better for stability and alignment.}\label{fig:s7_consistency}
+\caption{Full-test-cohort clinical-consistency behavior with and without consistency regularization across three random seeds. Each seed--variant model is evaluated on all 830,839 MIMIC-IV test windows. Lower is better for violation, reversal, and drift; higher is better for stability and guideline-risk correlation.}\label{fig:s7_consistency}
 \end{figure}
 """
     note_text = r"""
@@ -573,7 +573,7 @@ def write_latex(sofa: pd.DataFrame, mapping: pd.DataFrame) -> None:
 \item NEWS2 uses the 2017 Scale 1 oxygen saturation thresholds. Scale 2 is not used. Supplemental oxygen is proxied by FiO2 above 21 percent, and GCS below 15 proxies altered ACVPU status. Missing channels after within-stay forward fill contribute no points.
 \item NEWS2 heart rate 41--50 has no dedicated fuzzy term in the frozen model; it is represented by overlap between the very-low and normal Gaussian memberships.
 \item Fuzzy centers and sigmas initialize overlapping Gaussian memberships. Sigma is not a hard interval width, and all membership parameters remain trainable.
-\item Post-hoc and intrinsic explanations are aggregated to the same 13 clinical-variable groups. LightGBM and XGBoost use feature-matched 24-hour summaries; the available EBM is a current-state comparator and is therefore not architecture matched. S10--S11 and Figures S6--S7 use exploratory 1,000-case samples, not formal full-cohort analyses or clinician-reader validation.
+\item Post-hoc and intrinsic explanations are aggregated to the same 13 clinical-variable groups. LightGBM and XGBoost use feature-matched 24-hour summaries; the available EBM is a current-state comparator and is therefore not architecture matched. S10--S11 and Figures S6--S7 use full prediction-window cohorts, but their operational structural metrics are not clinician-reader validation.
 \item Clinical-consistency violation and risk-reversal rates are directional stress tests. In this experiment, regularization improved cross-seed rule stability but did not uniformly improve reversal frequency, membership drift, or guideline-risk correlation.
 \item Among primary positive windows, 39.0 percent had a component first observed at the future maximum; 67.1 percent remained positive under the pairwise common-component definition. This supports reporting documentation sensitivity rather than claiming that the reconstructed endpoint is free of documentation bias.
 \end{enumerate}

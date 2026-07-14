@@ -1,11 +1,17 @@
 {
-  "formal_full_data": false,
-  "analysis_scope": "exploratory_sample",
-  "sample_per_database": 1000,
-  "one_window_per_stay": true,
+  "formal_full_data": true,
+  "analysis_scope": "all_eligible_prediction_windows",
+  "target": "label_sofa_increase_ge2_6h",
+  "observation_window_hours": 24,
+  "mimic_windows": 830839,
+  "eicu_windows": 6215890,
   "perturbation_repeats": 3,
   "perturbation_sd_fraction": 0.01,
+  "consistency_definition": "consecutive eligible windows within the same ICU stay",
   "top_k": 5,
   "seed": 42,
-  "ebm_comparator": "current-state 13-feature EBM; not 24-h feature matched"
+  "batch_size": 4096,
+  "fnn_batch_size": 512,
+  "device": "cuda",
+  "ebm_comparator": "current-state 13-feature EBM; not 24-hour feature matched"
 }
